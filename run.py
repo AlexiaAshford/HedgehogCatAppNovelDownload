@@ -18,7 +18,7 @@ def refresh_bookshelf_list():
     if len(BookShelfList) == 1:
         shell_bookshelf(['bookshelf', '1'])
     else:
-        print('[提示]', '可输入"bookshelf <书架编号>"来选择/切换书架')
+        print('可输入"bookshelf <书架编号>"来选择/切换书架')
 
 
 def shell_login(inputs):
@@ -31,40 +31,40 @@ def shell_login(inputs):
                                               'account': response['data']['reader_info']['account']}
             Vars.cfg.save()
             HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
-            print('[提示]', '登录成功, 当前用户昵称为:', Vars.cfg.data['reader_name'])
+            print('登录成功, 当前用户昵称为:', Vars.cfg.data['reader_name'])
         else:
-            print('[提示]', response.get('tip'))
+            print(response.get('tip'))
     else:
-        print('[提示]', '请输入正确的参数')
+        print('请输入正确的参数')
 
 
 def shell_config(inputs):
     if len(inputs) >= 2:
         if inputs[1].startswith('l'):
             Vars.cfg.load()
-            print('[提示]', '配置文件已重新加载')
+            print('配置文件已重新加载')
             if Vars.cfg.data.get('user_code') is not None:
                 HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
         elif inputs[1].startswith('sa'):
             Vars.cfg.save()
-            print('[提示]', '配置文件已保存')
+            print('配置文件已保存')
         elif inputs[1].startswith('se'):
             if len(inputs) >= 3:
                 Vars.cfg[inputs[2]] = inputs[3]
             else:
                 Vars.cfg[inputs[2]] = None
-            print('[提示]', '配置项已修改')
+            print('配置项已修改')
     else:
-        print('[提示]', 'config:', str(Vars.cfg.data))
+        print('config:', str(Vars.cfg.data))
 
 
 def shell_bookshelf(inputs):
     if len(inputs) >= 2:
         Vars.current_bookshelf = get_bookshelf_by_index(inputs[1])
         if Vars.current_bookshelf is None:
-            print('[提示]', '请输入正确的参数')
+            print('请输入正确的参数')
         else:
-            print('[提示]', '已经选择书架: "' + Vars.current_bookshelf.shelf_name + '"')
+            print('已经选择书架: "' + Vars.current_bookshelf.shelf_name + '"')
             Vars.current_bookshelf.get_book_list()
             Vars.current_bookshelf.show_book_list()
             for book in Vars.current_bookshelf.BookList:
@@ -74,7 +74,7 @@ def shell_bookshelf(inputs):
                 if Vars.cfg.data['downloaded_book_id_list'].count(book.book_id) == 0:
                     Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
                     Vars.cfg.save()
-            print('[提示]', '书架下载已完成')
+            print('书架下载已完成')
     else:
         refresh_bookshelf_list()
 
@@ -83,7 +83,7 @@ def shell_download_book(inputs):
     Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1]).get('data')
     if Vars.current_book is not None:
         Vars.current_book = Book(book_info=Vars.current_book.get('book_info'))
-        print('[提示]', '已经选择书籍《' + Vars.current_book.book_name + '》')
+        print('已经选择书籍《' + Vars.current_book.book_name + '》')
         Vars.current_book.get_division_list()
         Vars.current_book.get_chapter_catalog()
         Vars.current_book.download_chapter(copy_dir=os.getcwd() + '/downloads/')
@@ -91,13 +91,13 @@ def shell_download_book(inputs):
             Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
             Vars.cfg.save()
     else:
-        print('[提示]', '获取书籍信息失败, book_id:', inputs[1])
+        print('获取书籍信息失败, book_id:', inputs[1])
 
 
 def shell_update():
     if Vars.cfg.data.get('downloaded_book_id_list') is None or \
             len(Vars.cfg.data.get('downloaded_book_id_list')) == 0:
-        print('[提示]', '暂无已下载书籍')
+        print('暂无已下载书籍')
         return
     for book_id in Vars.cfg.data['downloaded_book_id_list']:
         Vars.current_book = HbookerAPI.Book.get_info_by_id(book_id).get('data')

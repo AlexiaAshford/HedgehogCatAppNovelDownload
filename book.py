@@ -32,13 +32,14 @@ class Book:
         self.cover = book_info['cover'].replace(' ', '')
         self.last_chapter_info = book_info['last_chapter_info']
         self.pool_sema = threading.BoundedSemaphore(32)
+        self.current_progress = 0
         self.threading_list = []
         self.division_list = []
         self.chapter_list = []
         self.division_chapter_list = {}
 
     def get_division_list(self):
-        print('[提示]', '正在获取书籍分卷...')
+        print('正在获取书籍分卷...')
         response = HbookerAPI.Book.get_division_list(self.book_id)
         if response.get('code') == '100000':
             self.division_list = response['data']['division_list']
@@ -48,7 +49,7 @@ class Book:
             print('分卷编号:', division['division_index'], ', 分卷名:', division['division_name'])
 
     def get_chapter_catalog(self):
-        print('[提示]', '正在获取书籍目录...')
+        print('正在获取书籍目录...')
         self.chapter_list.clear()
         for division in self.division_list:
             response = HbookerAPI.Book.get_chapter_update(division['division_id'])
@@ -63,7 +64,7 @@ class Book:
 
     def download_chapter(self,copy_dir=None):
         if len(self.chapter_list) == 0:
-            print('[提示]', '暂无书籍目录')
+            print('暂无书籍目录')
             return
         self.file_path = os.getcwd() + '/downloads/' + self.book_name + '/' + self.book_name + '.epub'
         self.epub = EpubFile(self.file_path,
@@ -73,11 +74,12 @@ class Book:
         print('[提示][下载]', '《' + self.book_name + '》', '文件名:', self.book_name + '.epub')
         self.epub.setcover(self.cover)
 
+        division_chapter_length = len(self.chapter_list)
         for index, data in enumerate(self.chapter_list):
             if data['chapter_id'] + '.xhtml' in book_config:
                 continue
             thread = threading.Thread(
-                target=self.download_single, args=(data['chapter_id'], index, )
+                target=self.download_single, args=(data['chapter_id'], index, division_chapter_length, )
             )
             self.threading_list.append(thread)
 
@@ -114,9 +116,9 @@ class Book:
                 division_name = division['division_name']
                 break
         if division_name is None:
-            print('[提示]', '分卷编号不正确')
+            print('分卷编号不正确')
             return
-        print('[提示]', '《' + self.book_name + '》', '下载分卷:', division_name)
+        print('《' + self.book_name + '》', '下载分卷:', division_name)
         if len(self.division_chapter_list.get(division_name)) > 0:
             if not os.path.isdir(os.getcwd() + '/downloads/' + self.book_name):
                 os.makedirs(os.getcwd() + '/downloads/' + self.book_name)
@@ -127,6 +129,7 @@ class Book:
                 self.author_name)
             print('[提示][下载]', '《' + self.book_name + '》', '文件名:', self.book_name + '-' + division_name + '.epub')
             self.epub.setcover(self.cover)
+            division_chapter_length = self.division_chapter_list[division_name]
             for chapter_info in self.division_chapter_list[division_name]:
                 if self.download_single_by_id(chapter_info['chapter_index'], chapter_info['chapter_id']) is False:
                     print('[提示][下载]', '遇到未付费章节，跳过之后所有章节')
@@ -135,16 +138,17 @@ class Book:
             self.epub.export_txt()
             print('[提示][下载]', '《' + self.book_name + '》' + division_name, '下载已完成')
         else:
-            print('[提示]', '该分卷暂无章节')
+            print('该分卷暂无章节')
 
-    def download_single(self, chapter_id: str, index: int):
+    def download_single(self, chapter_id: str, index: int, division_chapter_length: int):
         self.pool_sema.acquire()
         response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
         if response.get('code') == '100000':
             chapter_command = response['data']['command']
             response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, chapter_command)
             if response2.get('code') == '100000' and response2['data']['chapter_info'].get('chapter_title') is not None:
-                print('[提示][下载]标题:', response2['data']['chapter_info']['chapter_title'])
+                self.current_progress += 1
+                print('[下载进度]: {}/{}'.format(self.current_progress, division_chapter_length), end="\r")
                 if response2['data']['chapter_info']['auth_access'] == '1':
                     content = HbookerAPI.CryptoUtil.decrypt(response2['data']['chapter_info']['txt_content'],
                                                             chapter_command).decode('utf-8')
