@@ -219,5 +219,5 @@ class EpubFile:
                                                           '位置:"' + str_mid(_img, '<img src="', '"')
                                                           .replace('../', '') + '"')
                 _data_chapter = re.sub(r'</?[\S\s]*?>', '', _data_chapter)
-                _data_chapter = re.sub(r'[\r\n]+', nl * 2, _data_chapter)
-                _file.write(_data_chapter + nl)
+                _data_chapter = re.sub(r'[\r\n]+', nl, _data_chapter)
+                _file.write(_data_chapter)

@@ -1,13 +1,5 @@
-from instance import *
 from bookshelf import *
-
-try:
-    import HbookerAPI
-except Exception as er:
-    print('[错误]', er)
-    print('[错误]', '请先安装requests库pycrypto或pycryptodome')
-    input()
-    exit()
+import HbookerAPI
 import re
 
 
@@ -36,7 +28,7 @@ def shell_login(inputs):
             Vars.cfg.data['common_params'] = {'login_token': response['data']['login_token'],
                                               'account': response['data']['reader_info']['account']}
             Vars.cfg.save()
-            HbookerAPI.setcommonparams(Vars.cfg.data['common_params'])
+            HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
             print('[提示]', '登录成功, 当前用户昵称为:', Vars.cfg.data['reader_name'])
         else:
             print('[提示]', response.get('tip'))
@@ -50,7 +42,7 @@ def shell_config(inputs):
             Vars.cfg.load()
             print('[提示]', '配置文件已重新加载')
             if Vars.cfg.data.get('user_code') is not None:
-                HbookerAPI.setcommonparams(Vars.cfg.data['common_params'])
+                HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
         elif inputs[1].startswith('sa'):
             Vars.cfg.save()
             print('[提示]', '配置文件已保存')
@@ -100,14 +92,31 @@ def shell_books(inputs):
             Vars.current_bookshelf.show_book_list()
 
 
-def shell_download(inputs):
+def shell_download_book(inputs):
+    Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1]).get('data')
+    if Vars.current_book is not None:
+        Vars.current_book = Book(book_info=Vars.current_book.get('book_info'))
+        Vars.current_book.get_division_list()
+        Vars.current_book.get_chapter_catalog()
+        Vars.current_book.download_chapter(copy_dir=os.getcwd() + '/downloads/')
+        if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
+            Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
+            Vars.cfg.save()
+    else:
+        print(Vars.current_book)
+
+
+def shell_download_bookshelf(inputs):
+    if Vars.cfg.data.get('user_code') is not None:
+        HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
+        refresh_bookshelf_list()
     if Vars.cfg.data.get('downloaded_book_id_list') is None:
         Vars.cfg.data['downloaded_book_id_list'] = []
     if inputs.count('-a') > 0:
         for book in Vars.current_bookshelf.BookList:
             book.get_division_list()
             book.get_chapter_catalog()
-            book.download_chapter(copy_dir=os.getcwd() + '/../Hbooker/downloads')
+            book.download_chapter(copy_dir=os.getcwd() + '/downloads')
             if Vars.cfg.data['downloaded_book_id_list'].count(book.book_id) == 0:
                 Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
                 Vars.cfg.save()
@@ -116,25 +125,7 @@ def shell_download(inputs):
     if Vars.current_book is None:
         print('[提示]', '未选择书籍')
         return
-    if inputs.count('-d') > 0:
-        if len(inputs) > inputs.index('-d') + 1:
-            Vars.current_book.download_division(inputs[inputs.index('-d') + 1])
-        else:
-            print('-d 参数出错')
-        return
-    chapter_index_start = None
-    chapter_index_end = None
-    if inputs.count('-s') > 0:
-        if len(inputs) > inputs.index('-s') + 1:
-            chapter_index_start = inputs[inputs.index('-s') + 1]
-        else:
-            print('-s 参数出错')
-    if inputs.count('-e') > 0:
-        if len(inputs) > inputs.index('-e') + 1:
-            chapter_index_end = inputs[inputs.index('-e') + 1]
-        else:
-            print('-e 参数出错')
-    Vars.current_book.download_chapter(chapter_index_start, chapter_index_end)
+    Vars.current_book.download_chapter()
     if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
         Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
         Vars.cfg.save()
@@ -150,7 +141,7 @@ def shell_update():
             Vars.current_book = Book(None, response['data']['book_info'])
             Vars.current_book.get_division_list()
             Vars.current_book.get_chapter_catalog()
-            Vars.current_book.download_chapter(copy_dir=os.getcwd() + '/../Hbooker/updates')
+            Vars.current_book.download_chapter(copy_dir=os.getcwd() + '/Hbooker/updates')
         else:
             print('[提示]', '获取书籍信息失败, book_id:', book_id)
     print('[提示]', '书籍更新已完成')
@@ -161,27 +152,37 @@ def shell():
         print('[帮助]', info)
     while True:
         inputs = re.split('\s+', get('>').strip())
-        if inputs[0].startswith('q'):
+        if inputs[0] == 'q' or inputs[0] == 'quit':
             exit()
-        elif inputs[0].startswith('l'):
+        elif inputs[0] == 'l' or inputs[0] == 'login':
             shell_login(inputs)
         elif inputs[0].startswith('c'):
             shell_config(inputs)
-        elif inputs[0].startswith('h'):
-            for info in Vars.help_info:
-                print('[帮助]', info)
+        elif inputs[0] == 'h' or inputs[0] == 'help':
+            print('\n'.join(Vars.help_info))
         elif inputs[0].startswith('books'):
             shell_bookshelf(inputs)
         elif inputs[0].startswith('b'):
             shell_books(inputs)
-        elif inputs[0].startswith('d'):
-            shell_download(inputs)
+        elif inputs[0] == 'd' or inputs[0] == 'download':
+            shell_download_book(inputs)
+        elif inputs[0] == 'ds' or inputs[0] == 'downloads':
+            shell_download_bookshelf(inputs)
         elif inputs[0].startswith('u'):
             shell_update()
 
 
-Vars.cfg.load()
-if Vars.cfg.data.get('user_code') is not None:
-    HbookerAPI.setcommonparams(Vars.cfg.data['common_params'])
-    refresh_bookshelf_list()
-shell()
+if __name__ == '__main__':
+    Vars.cfg.load()
+    if Vars.cfg.data.get('user_code') is None:
+        print("本地配置文件为空，请先登入账号！")
+    else:
+        HbookerAPI.set_common_params(Vars.cfg.data.get('common_params'))
+    if Vars.cfg.data.get('downloaded_book_id_list') is None:
+        Vars.cfg.data['downloaded_book_id_list'] = []
+        Vars.cfg.save()
+    if Vars.cfg.data.get('copy_start') is None:
+        Vars.cfg.data['copy_start'] = False
+        Vars.cfg.save()
+
+    shell()

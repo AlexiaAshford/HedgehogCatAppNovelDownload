@@ -1,33 +1,29 @@
 from HbookerAPI import HttpUtil, CryptoUtil, UrlConstants
 import json
 
-commonparams = {'account': None, 'login_token': None, 'app_version': '2.6.011'}
+common_params = {'account': None, 'login_token': None, 'app_version': '4.7.94'}
 
 
-def setcommonparams(params):
-    commonparams.update(params)
+def set_common_params(params):
+    common_params.update(params)
 
 
-def get(apiurl, params=commonparams, **kwargs):
+def get(api_url, params=None, **kwargs):
+    if params is None:
+        params = common_params
     if params is not None:
-        params.update(commonparams)
-    apiurl = apiurl.replace(UrlConstants.WEB_SITE, '')
-    ret = json.loads(CryptoUtil.decrypt(HttpUtil.get(UrlConstants.WEB_SITE + apiurl, params=params, **kwargs)))
-    # print('GET', apiurl)
-    # print(params)
-    # print(ret)
-    return ret
+        params.update(common_params)
+    api_url = api_url.replace(UrlConstants.WEB_SITE, '')
+    return json.loads(CryptoUtil.decrypt(HttpUtil.get(UrlConstants.WEB_SITE + api_url, params=params, **kwargs)))
 
 
-def post(apiurl, data=commonparams, **kwargs):
+def post(api_url, data=None, **kwargs):
+    if data is None:
+        data = common_params
     if data is not None:
-        data.update(commonparams)
-    apiurl = apiurl.replace(UrlConstants.WEB_SITE, '')
-    ret = json.loads(CryptoUtil.decrypt(HttpUtil.post(UrlConstants.WEB_SITE + apiurl, data=data, **kwargs)))
-    # print('POST', apiurl)
-    # print(data)
-    # print(ret)
-    return ret
+        data.update(common_params)
+    api_url = api_url.replace(UrlConstants.WEB_SITE, '')
+    return json.loads(CryptoUtil.decrypt(HttpUtil.post(UrlConstants.WEB_SITE + api_url, data=data, **kwargs)))
 
 
 class SignUp:

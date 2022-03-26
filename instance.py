@@ -2,10 +2,10 @@ from config import *
 
 
 class Vars:
-    cfg = Config(os.getcwd() + '/../Hbooker/config.json', os.getcwd() + "/../Hbooker")
+    cfg = Config(os.getcwd() + '/config.json', os.getcwd())
     current_bookshelf = None
     current_book = None
-    help_info = ['下载的书籍文件、缓存和配置文件在../Hbooker/下',
+    help_info = ['下载的书籍文件、缓存和配置文件在./Hbooker/下',
                  'quit \t 退出脚本',
                  'login <用户名> <密码> \t 登录欢乐书客帐号',
                  'config load \t 重新加载配置文件',
