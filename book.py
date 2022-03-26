@@ -1,3 +1,5 @@
+import threading
+
 import HbookerAPI
 from config import *
 from Epub import *
@@ -29,6 +31,8 @@ class Book:
         self.author_name = book_info['author_name']
         self.cover = book_info['cover'].replace(' ', '')
         self.last_chapter_info = book_info['last_chapter_info']
+        self.pool_sema = threading.BoundedSemaphore(32)
+        self.threading_list = []
         self.division_list = []
         self.chapter_list = []
         self.division_chapter_list = {}
@@ -72,9 +76,17 @@ class Book:
         for index, data in enumerate(self.chapter_list):
             if data['chapter_id'] + '.xhtml' in book_config:
                 continue
-            if self.download_single(data['chapter_id'], index) is False:
-                print('[提示][下载]', '遇到未付费章节，跳过之后所有章节')
-                break
+            thread = threading.Thread(
+                target=self.download_single, args=(data['chapter_id'], index, )
+            )
+            self.threading_list.append(thread)
+
+        for thread in self.threading_list:
+            thread.start()
+
+        for thread in self.threading_list:
+            thread.join()
+
         self.epub.export()
         self.epub.export_txt()
         if Vars.cfg.data.get('copy_start'):
@@ -126,6 +138,7 @@ class Book:
             print('[提示]', '该分卷暂无章节')
 
     def download_single(self, chapter_id: str, index: int):
+        self.pool_sema.acquire()
         response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
         if response.get('code') == '100000':
             chapter_command = response['data']['command']
@@ -143,12 +156,15 @@ class Book:
                     author_say = author_say.replace('\n', '</p>\r\n<p>')
                     self.epub.addchapter(str(index), chapter_id, response2['data']['chapter_info']['chapter_title'],
                                          '<p>' + content + '</p>\r\n<p>' + author_say + '</p>')
+                    self.pool_sema.release()
                     return True
                 else:
                     print('[提示][下载]', '该章节未付费，无法下载')
+                    self.pool_sema.release()
                     return False
             else:
                 print('[提示][下载]chapter_id:', chapter_id, ', 该章节为空章节，标记为已下载')
+                self.pool_sema.release()
                 return True
 
     def download_single_by_id(self, chapter_index, chapter_id):

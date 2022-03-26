@@ -115,9 +115,9 @@ def shell():
     if len(sys.argv) >= 2:
         inputs, cmd_line = sys.argv[1:], True
     else:
-        inputs, cmd_line = re.split('\\s+', get('>').strip()), False
         for info in Vars.help_info:
             print('[帮助]', info)
+        inputs, cmd_line = re.split('\\s+', get('>').strip()), False
     while True:
         if inputs[0] == 'q' or inputs[0] == 'quit':
             exit()
@@ -150,9 +150,7 @@ if __name__ == '__main__':
         HbookerAPI.set_common_params(Vars.cfg.data.get('common_params'))
     if Vars.cfg.data.get('downloaded_book_id_list') is None:
         Vars.cfg.data['downloaded_book_id_list'] = []
-        Vars.cfg.save()
     if Vars.cfg.data.get('copy_start') is None:
         Vars.cfg.data['copy_start'] = False
-        Vars.cfg.save()
-
+    Vars.cfg.save()
     shell()
