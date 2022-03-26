@@ -1,3 +1,5 @@
+import sys
+
 from bookshelf import *
 import HbookerAPI
 import re
@@ -93,26 +95,30 @@ def shell_download_book(inputs):
 
 
 def shell_update():
-    if Vars.cfg.data.get('downloaded_book_id_list') is None:
+    if Vars.cfg.data.get('downloaded_book_id_list') is None or \
+            len(Vars.cfg.data.get('downloaded_book_id_list')) == 0:
         print('[提示]', '暂无已下载书籍')
         return
     for book_id in Vars.cfg.data['downloaded_book_id_list']:
-        response = HbookerAPI.Book.get_info_by_id(book_id)
-        if response.get('code') == '100000':
-            Vars.current_book = Book(None, response['data']['book_info'])
+        Vars.current_book = HbookerAPI.Book.get_info_by_id(book_id).get('data')
+        if Vars.current_book is not None:
+            Vars.current_book = Book(None, Vars.current_book['book_info'])
             Vars.current_book.get_division_list()
             Vars.current_book.get_chapter_catalog()
             Vars.current_book.download_chapter(copy_dir=os.getcwd() + '/Hbooker/updates')
         else:
-            print('[提示]', '获取书籍信息失败, book_id:', book_id)
-    print('[提示]', '书籍更新已完成')
+            print('[提示]获取书籍信息失败, book_id:', book_id)
+    print('[提示]书籍更新已完成')
 
 
 def shell():
-    for info in Vars.help_info:
-        print('[帮助]', info)
+    if len(sys.argv) >= 2:
+        inputs, cmd_line = sys.argv[1:], True
+    else:
+        inputs, cmd_line = re.split('\\s+', get('>').strip()), False
+        for info in Vars.help_info:
+            print('[帮助]', info)
     while True:
-        inputs = re.split('\s+', get('>').strip())
         if inputs[0] == 'q' or inputs[0] == 'quit':
             exit()
         elif inputs[0] == 'l' or inputs[0] == 'login':
@@ -120,7 +126,8 @@ def shell():
         elif inputs[0].startswith('c'):
             shell_config(inputs)
         elif inputs[0] == 'h' or inputs[0] == 'help':
-            print('\n'.join(Vars.help_info))
+            for info in Vars.help_info:
+                print('[帮助]', info)
         elif inputs[0].startswith('books'):
             shell_bookshelf(inputs)
         elif inputs[0] == 'd' or inputs[0] == 'download':
@@ -129,6 +136,10 @@ def shell():
             shell_download_book(inputs)
         elif inputs[0] == 'up' or inputs[0] == 'updata':
             shell_update()
+        if not cmd_line:
+            inputs = re.split('\\s+', get('>').strip())
+        else:
+            sys.exit(1)
 
 
 if __name__ == '__main__':
