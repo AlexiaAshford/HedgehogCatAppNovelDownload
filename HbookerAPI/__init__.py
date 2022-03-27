@@ -28,9 +28,17 @@ def post(api_url, data=None, **kwargs):
 
 class SignUp:
     @staticmethod
-    def login(login_name, passwd):
-        data = {'login_name': login_name, 'passwd': passwd}
-        return post(UrlConstants.MY_SIGN_LOGIN, data)
+    def login(account_info: dict):
+        return post(UrlConstants.MY_SIGN_LOGIN, data=account_info)
+
+    @staticmethod
+    def user_account():
+        response = post(UrlConstants.MY_DETAILS_INFO)
+        if response.get('code') == '100000':
+            return response.get('data').get('reader_info').get('reader_name')
+        else:
+            print("Error:", response.get('tip'), "请先登入账号！")
+
 
 
 class BookShelf:

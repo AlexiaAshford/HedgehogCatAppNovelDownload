@@ -23,19 +23,21 @@ def refresh_bookshelf_list():
 
 def shell_login(inputs):
     if len(inputs) >= 3:
-        response = HbookerAPI.SignUp.login(inputs[1], inputs[2])
-        if response.get('code') == '100000':
-            Vars.cfg.data['reader_name'] = response['data']['reader_info']['reader_name']
-            Vars.cfg.data['user_code'] = response['data']['user_code']
-            Vars.cfg.data['common_params'] = {'login_token': response['data']['login_token'],
-                                              'account': response['data']['reader_info']['account']}
-            Vars.cfg.save()
+
+        response_login = HbookerAPI.SignUp.login({'login_name': inputs[1], 'passwd': inputs[2]})
+        if response_login.get('code') == '100000':
+            Vars.cfg.data['account_info'] = {'login_name': inputs[1], 'passwd': inputs[2]}
+            Vars.cfg.data['common_params'] = {
+                'login_token': response_login['data']['login_token'],
+                'account': response_login['data']['reader_info']['account']
+            }
             HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
-            print('登录成功, 当前用户昵称为:', Vars.cfg.data['reader_name'])
+            Vars.cfg.save()
+            print('登录成功, 当前用户昵称为:', HbookerAPI.SignUp.user_account())
         else:
-            print(response.get('tip'))
+            print(response_login.get('tip'))
     else:
-        print('请输入正确的参数')
+        print(HbookerAPI.SignUp.user_account())
 
 
 def shell_config(inputs):
@@ -111,6 +113,18 @@ def shell_update():
     print('[提示]书籍更新已完成')
 
 
+def update_config():
+    Vars.cfg.load()
+    if Vars.cfg.data.get('common_params') is None:
+        Vars.cfg.data['common_params'] = {'login_token': "", 'account': ""}
+    if Vars.cfg.data.get('downloaded_book_id_list') is None:
+        Vars.cfg.data['downloaded_book_id_list'] = []
+    if Vars.cfg.data.get('copy_start') is None:
+        Vars.cfg.data['copy_start'] = False
+    Vars.cfg.save()
+    HbookerAPI.set_common_params(Vars.cfg.data.get('common_params'))
+
+
 def shell():
     if len(sys.argv) >= 2:
         inputs, cmd_line = sys.argv[1:], True
@@ -143,14 +157,21 @@ def shell():
 
 
 if __name__ == '__main__':
-    Vars.cfg.load()
-    if Vars.cfg.data.get('user_code') is None:
-        print("本地配置文件为空，请先登入账号！")
+    update_config()
+    if HbookerAPI.SignUp.user_account() is not None:
+        print("当前登入账号:", HbookerAPI.SignUp.user_account())
     else:
-        HbookerAPI.set_common_params(Vars.cfg.data.get('common_params'))
-    if Vars.cfg.data.get('downloaded_book_id_list') is None:
-        Vars.cfg.data['downloaded_book_id_list'] = []
-    if Vars.cfg.data.get('copy_start') is None:
-        Vars.cfg.data['copy_start'] = False
-    Vars.cfg.save()
+        if Vars.cfg.data.get('account_info') is not None:
+            print("检测到本地配置文件，尝试自动登入...")
+            response = HbookerAPI.SignUp.login(Vars.cfg.data['account_info'])
+            if response.get('code') == '100000':
+                Vars.cfg.data['common_params'] = {
+                    'login_token': response['data']['login_token'],
+                    'account': response['data']['reader_info']['account']
+                }
+                HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
+                Vars.cfg.save()
+                print("账号:", HbookerAPI.SignUp.user_account(), "自动登入成功！")
+        else:
+            print("检测到本地配置文件账号信息为空，请手动登入！")
     shell()
