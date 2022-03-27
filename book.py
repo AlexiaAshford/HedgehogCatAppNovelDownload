@@ -51,14 +51,12 @@ class Book:
             return
 
         Vars.out_text_file = os.path.join(os.getcwd(), 'downloads', self.book_name + '.txt')
-        Config("", os.getcwd() + '/Hbooker/' + self.book_name)
-        book_config = os.listdir(os.getcwd() + '/Hbooker/' + self.book_name)
-        division_chapter_length = len(self.chapter_list)
-
+        Vars.config_text = os.path.join(os.getcwd(), 'Hbooker', self.book_name)
+        Config("", Vars.config_text)
         for index, data in enumerate(self.chapter_list):
-            if data['chapter_id'] + '.txt' in book_config or data['auth_access'] == '0':
+            if data['chapter_id'] + '.txt' in os.listdir(Vars.config_text) or data['auth_access'] == '0':
                 continue
-            thread = threading.Thread(target=self.download_single, args=(data['chapter_id'], division_chapter_length,))
+            thread = threading.Thread(target=self.download_single, args=(data['chapter_id'], len(self.chapter_list),))
             self.threading_list.append(thread)
 
         for thread in self.threading_list:
@@ -73,8 +71,7 @@ class Book:
 
     def export_txt(self):
         Config(Vars.out_text_file, "./downloads")
-        file_name_list = os.listdir(os.getcwd() + '/Hbooker/' + Vars.current_book.book_name)
-        for file_name in file_name_list:
+        for file_name in os.listdir(Vars.config_text):
             file_info = write(os.getcwd() + '/Hbooker/' + Vars.current_book.book_name + "/" + file_name, 'r')
             write(Vars.out_text_file, "a", file_info)
 
@@ -94,22 +91,21 @@ class Book:
     def download_single(self, chapter_id: str, division_chapter_length: int):
         self.pool_sema.acquire()
         response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
-        if response.get('code') == '100000':
-            chapter_command = response['data']['command']
-            response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, chapter_command)
-            if response2.get('code') == '100000' and response2['data']['chapter_info'].get('chapter_title') is not None:
-                self.current_progress += 1
-                print('[下载进度]: {}/{}'.format(self.current_progress, division_chapter_length), end="\r")
-                title = response2['data']['chapter_info']['chapter_title'].replace("#G9uf", "")
-                content = HbookerAPI.CryptoUtil.decrypt(
-                    response2['data']['chapter_info']['txt_content'], chapter_command).decode('utf-8')
+        response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, response['data']['command'])
+        if response2.get('code') == '100000' and response2['data']['chapter_info'].get('chapter_title') is not None:
+            self.current_progress += 1
+            print('[下载进度]: {}/{}'.format(self.current_progress, division_chapter_length), end="\r")
+            title = response2['data']['chapter_info']['chapter_title'].replace("#G9uf", "")
+            content = HbookerAPI.CryptoUtil.decrypt(
+                response2['data']['chapter_info']['txt_content'], response['data']['command']).decode('utf-8')
 
-                write(os.getcwd() + '/Hbooker/' + self.book_name + "/" + chapter_id + ".txt", 'w',
-                      "{}\n{}\n{}".format(title, content, response2['data']['chapter_info']['author_say']))
+            write(Vars.config_text + "/" + chapter_id + ".txt", 'w',
+                  "{}\n{}\n{}".format(title, content, response2['data']['chapter_info']['author_say'])
+                  )
 
-                self.pool_sema.release()
-                return True
-            else:
-                print('[提示][下载]chapter_id:', chapter_id, ', 该章节为空章节，标记为已下载')
-                self.pool_sema.release()
-                return True
+            self.pool_sema.release()
+            return True
+        else:
+            print('[提示][下载]chapter_id:', chapter_id, ', 该章节为空章节，标记为已下载')
+            self.pool_sema.release()
+            return True

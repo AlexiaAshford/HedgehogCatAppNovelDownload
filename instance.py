@@ -6,6 +6,7 @@ class Vars:
     current_bookshelf = None
     current_book = None
     out_text_file = None
+    config_text = None
     help_info = [
         '下载的书籍文件、缓存和配置文件在./Hbooker/下',
         'quit \t\t\t\t 退出脚本',
