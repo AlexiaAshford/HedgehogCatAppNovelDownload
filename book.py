@@ -5,19 +5,6 @@ import shutil
 
 
 class Book:
-    index = None
-    book_id = None
-    book_name = None
-    author_name = None
-    cover = None
-    book_info = None
-    last_chapter_info = None
-    division_list = None
-    chapter_list = None
-    division_chapter_list = None
-    epub = None
-    config = None
-    file_path = None
 
     def __init__(self, book_info, index=None, ):
         self.index = index
@@ -95,12 +82,11 @@ class Book:
         try:
             if copy_dir is not None:
                 copy_dir = copy_dir.replace("?", "？")
-                file_dir, file_name = os.path.split(self.file_path)
+                file_dir, file_name = os.path.split(Vars.out_text_file)
                 if not os.path.isdir(copy_dir):
                     os.makedirs(copy_dir)
-                shutil.copyfile(self.file_path, copy_dir + '/' + file_name)
-                shutil.copyfile(self.file_path.replace('epub', 'txt'),
-                                copy_dir + '/' + file_name.replace('epub', 'txt'))
+                shutil.copyfile(Vars.out_text_file, copy_dir + '/' + file_name)
+                shutil.copyfile(Vars.out_text_file, copy_dir + '/' + Vars.out_text_file)
         except Exception as e:
             print('[错误]', e)
             print('复制文件时出错')
