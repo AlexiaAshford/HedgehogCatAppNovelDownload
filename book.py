@@ -66,6 +66,8 @@ class Book:
 
         self.file_path = os.getcwd() + '/downloads/' + self.book_name + '/' + self.book_name + '.epub'
         Config(self.file_path, os.getcwd() + '/downloads/' + self.book_name)
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
         self.epub = EpubFile(self.file_path,
                              os.getcwd() + '/Hbooker/cache/' + self.book_name, self.book_id, self.book_name,
                              self.author_name)
@@ -108,36 +110,6 @@ class Book:
             print('[错误]', e)
             print('复制文件时出错')
 
-    def download_division(self, division_index):
-        division_name = None
-        for division in self.division_list:
-            if division['division_index'] == division_index:
-                division_name = division['division_name']
-                break
-        if division_name is None:
-            print('分卷编号不正确')
-            return
-        print('《' + self.book_name + '》', '下载分卷:', division_name)
-        if len(self.division_chapter_list.get(division_name)) > 0:
-            if not os.path.isdir(os.getcwd() + '/downloads/' + self.book_name):
-                os.makedirs(os.getcwd() + '/downloads/' + self.book_name)
-            self.file_path = os.getcwd() + '/downloads/' + self.book_name + '/' + self.book_name + '-' + division_name + '.epub'
-            self.epub = EpubFile(
-                self.file_path,
-                os.getcwd() + '/Hbooker/cache/' + self.book_name + '-' + division_name, self.book_id, self.book_name,
-                self.author_name)
-            print('[提示][下载]', '《' + self.book_name + '》', '文件名:', self.book_name + '-' + division_name + '.epub')
-            self.epub.setcover(self.cover)
-            division_chapter_length = self.division_chapter_list[division_name]
-            for chapter_info in self.division_chapter_list[division_name]:
-                if self.download_single_by_id(chapter_info['chapter_index'], chapter_info['chapter_id']) is False:
-                    print('[提示][下载]', '遇到未付费章节，跳过之后所有章节')
-                    break
-            self.epub.export()
-            self.epub.export_txt()
-            print('[提示][下载]', '《' + self.book_name + '》' + division_name, '下载已完成')
-        else:
-            print('该分卷暂无章节')
 
     def download_single(self, chapter_id: str, index: int, division_chapter_length: int):
         self.pool_sema.acquire()

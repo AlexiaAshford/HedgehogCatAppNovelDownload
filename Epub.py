@@ -196,10 +196,11 @@ class EpubFile:
                 _data_chapter = re.sub(r'<h3>.*?</h3>', '', write(self._tempdir + '/OEBPS/Text/' + _name, 'r'))
                 for _a in re.findall(r'<a href=.*?>章节链接</a>', _data_chapter):
                     _data_chapter = _data_chapter.replace(_a, '章节链接:' + str_mid(_a, '<a href="', '"'))
-                for _img in re.findall(r'<img src=.*?>', _data_chapter):
-                    _data_chapter = _data_chapter.replace(_img, '图片:"' + str_mid(_img, "alt='", "'") + '",' +
-                                                          '位置:"' + str_mid(_img, '<img src="', '"')
-                                                          .replace('../', '') + '"')
+                # for _img in re.findall(r'<img src=.*?>', _data_chapter):
+                #     print(_img)
+                #     _data_chapter = _data_chapter.replace(_img, '图片:"' + str_mid(_img, "alt='", "'") + '",' +
+                #                                           '位置:"' + str_mid(_img, '<img src="', '"')
+                #                                           .replace('../', '') + '"')
                 _data_chapter = re.sub(r'</?[\S\s]*?>', '', _data_chapter)
                 _data_chapter = re.sub(r'[\r\n]+', '\r\n', _data_chapter)
                 _file.write(_data_chapter)
