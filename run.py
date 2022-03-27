@@ -145,38 +145,35 @@ def tests_account_login():
             print("检测到本地配置文件账号信息为空，请手动登入！")
 
 
-def shell():
-    if len(sys.argv) >= 2:
-        inputs, cmd_line = sys.argv[1:], True
-    else:
+def shell(inputs):
+    if inputs[0] == 'q' or inputs[0] == 'quit':
+        exit()
+    elif inputs[0] == 'l' or inputs[0] == 'login':
+        shell_login(inputs)
+    elif inputs[0].startswith('c'):
+        shell_config(inputs)
+    elif inputs[0] == 'h' or inputs[0] == 'help':
         for info in Vars.help_info:
             print('[帮助]', info)
-        inputs, cmd_line = re.split('\\s+', get('>').strip()), False
-    while True:
-        if inputs[0] == 'q' or inputs[0] == 'quit':
-            exit()
-        elif inputs[0] == 'l' or inputs[0] == 'login':
-            shell_login(inputs)
-        elif inputs[0].startswith('c'):
-            shell_config(inputs)
-        elif inputs[0] == 'h' or inputs[0] == 'help':
-            for info in Vars.help_info:
-                print('[帮助]', info)
-        elif inputs[0].startswith('books'):
-            shell_bookshelf(inputs)
-        elif inputs[0] == 'd' or inputs[0] == 'download':
-            shell_download_book(inputs)
-        elif inputs[0] == 'bs' or inputs[0] == 'bookshelf':
-            shell_download_book(inputs)
-        elif inputs[0] == 'up' or inputs[0] == 'updata':
-            shell_update()
-        if not cmd_line:
-            inputs = re.split('\\s+', get('>').strip())
-        else:
-            sys.exit(1)
+    elif inputs[0].startswith('books'):
+        shell_bookshelf(inputs)
+    elif inputs[0] == 'd' or inputs[0] == 'download':
+        shell_download_book(inputs)
+    elif inputs[0] == 'bs' or inputs[0] == 'bookshelf':
+        shell_download_book(inputs)
+    elif inputs[0] == 'up' or inputs[0] == 'updata':
+        shell_update()
 
 
 if __name__ == '__main__':
     update_config()
     tests_account_login()
-    shell()
+    if len(sys.argv) >= 2:
+        shell(sys.argv[1:])
+    else:
+        for info in Vars.help_info:
+            print('[帮助]', info)
+        inputs_list = re.split('\\s+', get('>').strip())
+        while True:
+            shell(inputs_list)
+            inputs_list = re.split('\\s+', get('>').strip())
