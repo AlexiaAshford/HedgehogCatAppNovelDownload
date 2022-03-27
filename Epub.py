@@ -1,7 +1,7 @@
 import zipfile
 import re
-import os
 import codecs
+from instance import *
 import urllib.request
 
 
@@ -119,10 +119,8 @@ class EpubFile:
                 '<navMap>' + self._toc_ncx_navMap + '</navMap>', 1)
 
     def _save(self):
-        with codecs.open(self._tempdir + '/OEBPS/content.opf', 'w', 'utf-8') as _file:
-            _file.write(self._content_opf)
-        with codecs.open(self._tempdir + '/OEBPS/toc.ncx', 'w', 'utf-8') as _file:
-            _file.write(self._toc_ncx)
+        write(self._tempdir + '/OEBPS/content.opf', 'w', self._content_opf)
+        write(self._tempdir + '/OEBPS/toc.ncx', 'w', self._toc_ncx)
 
     def setcover(self, url: str):
         urllib.request.urlretrieve(url, self._tempdir + '/OEBPS/Images/cover.jpg')
@@ -159,8 +157,8 @@ class EpubFile:
     def addimagechapter(self, chapter_index: str, chapter_id: str, chapter_title: str, image: bytes):
         self.addchapter(chapter_index, chapter_id, chapter_title,
                         '<img src="../Images/' + chapter_id + '.png" alt=\'' + chapter_title + '\' />')
-        with open(self._tempdir + '/OEBPS/Images/' + chapter_id + '.png', 'wb') as _file:
-            _file.write(image)
+
+        write(self._tempdir + '/OEBPS/Images/' + chapter_id + '.png', 'wb', image)
         self._add_manifest_image(chapter_id + '.png')
 
     def fixchapter(self, chapter_id: str, chapter_title: str, chapter_content: str):
@@ -179,8 +177,7 @@ class EpubFile:
     def fiximagechapter(self, chapter_id: str, chapter_title: str, image: bytes):
         self.fixchapter(chapter_id, chapter_title,
                         '<img src="../Images/' + chapter_id + '.png" alt=\'' + chapter_title + '\' />')
-        with open(self._tempdir + '/OEBPS/Images/' + chapter_id + '.png', 'wb') as _file:
-            _file.write(image)
+        write(self._tempdir + '/OEBPS/Images/' + chapter_id + '.png', 'wb', image)
         self._add_manifest_image(chapter_id + '.png')
 
     def export(self):
@@ -196,8 +193,7 @@ class EpubFile:
             for _name in sorted(os.listdir(self._tempdir + '/OEBPS/Text')):
                 if _name.find('$') > -1 or _name == 'cover.xhtml':
                     continue
-                with codecs.open(self._tempdir + '/OEBPS/Text/' + _name, 'utf-8') as _file_xhtml:
-                    _data_chapter = re.sub(r'<h3>.*?</h3>', '', str(_file_xhtml.read()))
+                _data_chapter = re.sub(r'<h3>.*?</h3>', '', write(self._tempdir + '/OEBPS/Text/' + _name, 'r'))
                 for _a in re.findall(r'<a href=.*?>章节链接</a>', _data_chapter):
                     _data_chapter = _data_chapter.replace(_a, '章节链接:' + str_mid(_a, '<a href="', '"'))
                 for _img in re.findall(r'<img src=.*?>', _data_chapter):

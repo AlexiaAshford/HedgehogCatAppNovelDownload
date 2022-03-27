@@ -1,9 +1,6 @@
 import threading
-
 import HbookerAPI
-from config import *
 from Epub import *
-import os
 from instance import *
 import shutil
 
@@ -167,7 +164,7 @@ class Book:
                     self.pool_sema.release()
                     return True
                 else:
-                    print(response2['data']['chapter_info']['chapter_title'].replace("#G9uf"), '该章节未付费，无法下载')
+                    print(response2['data']['chapter_info']['chapter_title'], '该章节未付费，无法下载')
                     self.pool_sema.release()
                     return False
             else:

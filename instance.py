@@ -17,6 +17,13 @@ class Vars:
     ]
 
 
+def write(file_path, mode='', data=None):
+    if mode == 'r' or 'r' in mode:
+        return open(file_path, 'r', encoding='utf-8').read()
+    with open(file_path, mode, encoding='utf-8') as _file:
+        _file.write(data)
+
+
 def get(prompt, default=None):
     while True:
         ret = input(prompt)
