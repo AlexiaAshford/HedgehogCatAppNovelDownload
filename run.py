@@ -24,17 +24,17 @@ def refresh_bookshelf_list():
 def shell_login(inputs):
     if len(inputs) >= 3:
         Vars.cfg.data['account_info'] = {'login_name': inputs[1], 'passwd': inputs[2]}
-        response_login = HbookerAPI.SignUp.login(Vars.cfg.data.get('account_info'))
-        if response_login.get('code') == '100000':
+        response = HbookerAPI.SignUp.login(Vars.cfg.data.get('account_info'))
+        if response.get('code') == '100000':
             Vars.cfg.data['common_params'] = {
-                'login_token': response_login['data']['login_token'],
-                'account': response_login['data']['reader_info']['account']
+                'login_token': response['data']['login_token'],
+                'account': response['data']['reader_info']['account']
             }
             HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
             Vars.cfg.save()
             print('登录成功, 当前用户昵称为:', HbookerAPI.SignUp.user_account())
         else:
-            print(response_login.get('tip'))
+            print(response.get('tip'))
     else:
         print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
 
@@ -124,6 +124,27 @@ def update_config():
     HbookerAPI.set_common_params(Vars.cfg.data.get('common_params'))
 
 
+def tests_account_login():
+    if HbookerAPI.SignUp.user_account() is not None:
+        print("当前登入账号:", HbookerAPI.SignUp.user_account())
+    else:
+        if Vars.cfg.data.get('account_info') is not None:
+            print("检测到本地配置文件，尝试自动登入...")
+            response = HbookerAPI.SignUp.login(Vars.cfg.data['account_info'])
+            if response.get('code') == '100000':
+                Vars.cfg.data['common_params'] = {
+                    'login_token': response['data']['login_token'],
+                    'account': response['data']['reader_info']['account']
+                }
+                HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
+                Vars.cfg.save()
+                print("账号:", HbookerAPI.SignUp.user_account(), "自动登入成功！")
+            else:
+                print("登入失败:", response.get('tip'))
+        else:
+            print("检测到本地配置文件账号信息为空，请手动登入！")
+
+
 def shell():
     if len(sys.argv) >= 2:
         inputs, cmd_line = sys.argv[1:], True
@@ -157,22 +178,5 @@ def shell():
 
 if __name__ == '__main__':
     update_config()
-    if HbookerAPI.SignUp.user_account() is not None:
-        print("当前登入账号:", HbookerAPI.SignUp.user_account())
-    else:
-        if Vars.cfg.data.get('account_info') is not None:
-            print("检测到本地配置文件，尝试自动登入...")
-            response = HbookerAPI.SignUp.login(Vars.cfg.data['account_info'])
-            if response.get('code') == '100000':
-                Vars.cfg.data['common_params'] = {
-                    'login_token': response['data']['login_token'],
-                    'account': response['data']['reader_info']['account']
-                }
-                HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
-                Vars.cfg.save()
-                print("账号:", HbookerAPI.SignUp.user_account(), "自动登入成功！")
-            else:
-                print("登入失败:", response.get('tip'))
-        else:
-            print("检测到本地配置文件账号信息为空，请手动登入！")
+    tests_account_login()
     shell()
