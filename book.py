@@ -72,7 +72,7 @@ class Book:
     def export_txt(self):
         Config(Vars.out_text_file, "./downloads")
         for file_name in os.listdir(Vars.config_text):
-            file_info = write(os.getcwd() + '/Hbooker/' + Vars.current_book.book_name + "/" + file_name, 'r')
+            file_info = write(Vars.config_text + "/" + file_name, 'r')
             write(Vars.out_text_file, "a", file_info)
 
     def copy_file(self, copy_dir: str):
@@ -91,18 +91,14 @@ class Book:
     def download_single(self, chapter_id: str, division_chapter_length: int):
         self.pool_sema.acquire()
         response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
-        response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, response['data']['command'])
-        if response2.get('code') == '100000' and response2['data']['chapter_info'].get('chapter_title') is not None:
+        response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, response['data']['command'])['data']['chapter_info']
+        if response2.get('code') == '100000' and response2.get('chapter_title') is not None:
+            chapter_title = "第"+response2['chapter_index']+"章 "+response2['chapter_title'].replace("#G9uf", "")
+            chapter_content = HbookerAPI.CryptoUtil.decrypt(response2['txt_content'], response['data']['command'])
+            chapter_info = "{}\n{}\n{}".format(chapter_title, chapter_content.decode('utf-8'), response2['author_say'])
+            write(Vars.config_text + "/" + chapter_id + ".txt", 'w', chapter_info)
             self.current_progress += 1
             print('[下载进度]: {}/{}'.format(self.current_progress, division_chapter_length), end="\r")
-            title = response2['data']['chapter_info']['chapter_title'].replace("#G9uf", "")
-            content = HbookerAPI.CryptoUtil.decrypt(
-                response2['data']['chapter_info']['txt_content'], response['data']['command']).decode('utf-8')
-
-            write(Vars.config_text + "/" + chapter_id + ".txt", 'w',
-                  "{}\n{}\n{}".format(title, content, response2['data']['chapter_info']['author_say'])
-                  )
-
             self.pool_sema.release()
             return True
         else:
