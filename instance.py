@@ -5,6 +5,7 @@ class Vars:
     cfg = Config(os.getcwd() + '/config.json', os.getcwd())
     current_bookshelf = None
     current_book = None
+    out_text_file = None
     help_info = [
         '下载的书籍文件、缓存和配置文件在./Hbooker/下',
         'quit \t\t\t\t 退出脚本',
@@ -17,7 +18,7 @@ class Vars:
     ]
 
 
-def write(file_path, mode='', data=None):
+def write(file_path, mode='', data=''):
     if mode == 'r' or 'r' in mode:
         return open(file_path, 'r', encoding='utf-8').read()
     with open(file_path, mode, encoding='utf-8') as _file:

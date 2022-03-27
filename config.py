@@ -12,6 +12,8 @@ class Config:
         self.dir_path = dir_path
         if not os.path.isdir(self.dir_path):
             os.makedirs(self.dir_path)
+        if '.txt' in file_path:
+            open(self.file_path, 'w').close()
         self.data = {}
 
     def load(self):
