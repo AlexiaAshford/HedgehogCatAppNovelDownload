@@ -62,15 +62,17 @@ class Book:
         print('\t最新章节: \t章节编号:', self.chapter_list[-1]['chapter_index'], ', 章节标题:',
               self.chapter_list[-1]['chapter_title'])
 
-    def download_chapter(self,copy_dir=None):
+    def download_chapter(self, copy_dir=None):
         if len(self.chapter_list) == 0:
             print('暂无书籍目录')
             return
+
         self.file_path = os.getcwd() + '/downloads/' + self.book_name + '/' + self.book_name + '.epub'
+        Config(self.file_path, os.getcwd() + '/downloads/' + self.book_name)
         self.epub = EpubFile(self.file_path,
                              os.getcwd() + '/Hbooker/cache/' + self.book_name, self.book_id, self.book_name,
                              self.author_name)
-        book_config = os.listdir(os.getcwd() + '/Hbooker/cache/' + self.book_name+'/OEBPS/Text/')
+        book_config = os.listdir(os.getcwd() + '/Hbooker/cache/' + self.book_name + '/OEBPS/Text/')
         print('[提示][下载]', '《' + self.book_name + '》', '文件名:', self.book_name + '.epub')
         self.epub.setcover(self.cover)
 
@@ -79,7 +81,7 @@ class Book:
             if data['chapter_id'] + '.xhtml' in book_config:
                 continue
             thread = threading.Thread(
-                target=self.download_single, args=(data['chapter_id'], index, division_chapter_length, )
+                target=self.download_single, args=(data['chapter_id'], index, division_chapter_length,)
             )
             self.threading_list.append(thread)
 
@@ -148,8 +150,8 @@ class Book:
             response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, chapter_command)
             if response2.get('code') == '100000' and response2['data']['chapter_info'].get('chapter_title') is not None:
                 self.current_progress += 1
-                print('[下载进度]: {}/{}'.format(self.current_progress, division_chapter_length), end="\r")
                 if response2['data']['chapter_info']['auth_access'] == '1':
+                    print('[下载进度]: {}/{}'.format(self.current_progress, division_chapter_length), end="\r")
                     content = HbookerAPI.CryptoUtil.decrypt(response2['data']['chapter_info']['txt_content'],
                                                             chapter_command).decode('utf-8')
                     if content.find('\n') + 1 < len(content):
@@ -158,12 +160,14 @@ class Book:
                         content = content.replace('\n', '</p>\r\n<p>')
                     author_say = response2['data']['chapter_info']['author_say'].replace('\r', '')
                     author_say = author_say.replace('\n', '</p>\r\n<p>')
-                    self.epub.addchapter(str(index), chapter_id, response2['data']['chapter_info']['chapter_title'],
-                                         '<p>' + content + '</p>\r\n<p>' + author_say + '</p>')
+                    self.epub.addchapter(
+                        str(index), chapter_id, response2['data']['chapter_info']['chapter_title'].replace("#G9uf"),
+                        '<p>' + content + '</p>\r\n<p>' + author_say.replace('\n', '</p>\r\n<p>') + '</p>'
+                    )
                     self.pool_sema.release()
                     return True
                 else:
-                    print('[提示][下载]', '该章节未付费，无法下载')
+                    print(response2['data']['chapter_info']['chapter_title'].replace("#G9uf"), '该章节未付费，无法下载')
                     self.pool_sema.release()
                     return False
             else:

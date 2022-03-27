@@ -1,5 +1,4 @@
 import sys
-
 from bookshelf import *
 import HbookerAPI
 import re
@@ -152,9 +151,6 @@ def shell(inputs):
         shell_login(inputs)
     elif inputs[0].startswith('c'):
         shell_config(inputs)
-    elif inputs[0] == 'h' or inputs[0] == 'help':
-        for info in Vars.help_info:
-            print('[帮助]', info)
     elif inputs[0].startswith('books'):
         shell_bookshelf(inputs)
     elif inputs[0] == 'd' or inputs[0] == 'download':
