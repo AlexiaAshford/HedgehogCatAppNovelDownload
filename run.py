@@ -23,10 +23,9 @@ def refresh_bookshelf_list():
 
 def shell_login(inputs):
     if len(inputs) >= 3:
-
-        response_login = HbookerAPI.SignUp.login({'login_name': inputs[1], 'passwd': inputs[2]})
+        Vars.cfg.data['account_info'] = {'login_name': inputs[1], 'passwd': inputs[2]}
+        response_login = HbookerAPI.SignUp.login(Vars.cfg.data.get('account_info'))
         if response_login.get('code') == '100000':
-            Vars.cfg.data['account_info'] = {'login_name': inputs[1], 'passwd': inputs[2]}
             Vars.cfg.data['common_params'] = {
                 'login_token': response_login['data']['login_token'],
                 'account': response_login['data']['reader_info']['account']
@@ -37,7 +36,7 @@ def shell_login(inputs):
         else:
             print(response_login.get('tip'))
     else:
-        print(HbookerAPI.SignUp.user_account())
+        print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
 
 
 def shell_config(inputs):
@@ -172,6 +171,8 @@ if __name__ == '__main__':
                 HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
                 Vars.cfg.save()
                 print("账号:", HbookerAPI.SignUp.user_account(), "自动登入成功！")
+            else:
+                print("登入失败:", response.get('tip'))
         else:
             print("检测到本地配置文件账号信息为空，请手动登入！")
     shell()
