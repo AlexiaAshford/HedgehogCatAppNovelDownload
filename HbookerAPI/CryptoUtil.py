@@ -23,9 +23,3 @@ def pkcs7unpadding(data):
     return data[0:length - unpadding]
 
 
-if __name__ == '__main__':
-    print('decrypt,key=', decrypt(
-        'c1SR02T7X+xmq37zfs0U8NAj73eedAs3tnXMQKDNUPlI2vcaNRXpKA3JktMoffp3EYPCsvCjzeCJUynjDISbNP4D5HjaCp6tMrOsBBfQzVI='))
-    test = b'{"code":200001,"tip":"\\u7f3a\\u5c11\\u767b\\u5f55\\u5fc5\\u9700\\u53c2\\u6570"}\x08\x08\x08\x08\x08\x08\x08\x08'
-    print('pkcs7unpadding', pkcs7unpadding(test))
-

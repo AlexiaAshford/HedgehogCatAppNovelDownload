@@ -34,26 +34,6 @@ def shell_login(inputs):
         print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
 
 
-def shell_config(inputs):
-    if len(inputs) >= 2:
-        if inputs[1].startswith('l'):
-            Vars.cfg.load()
-            print('配置文件已重新加载')
-            if Vars.cfg.data.get('user_code') is not None:
-                HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
-        elif inputs[1].startswith('sa'):
-            Vars.cfg.save()
-            print('配置文件已保存')
-        elif inputs[1].startswith('se'):
-            if len(inputs) >= 3:
-                Vars.cfg[inputs[2]] = inputs[3]
-            else:
-                Vars.cfg[inputs[2]] = None
-            print('配置项已修改')
-    else:
-        print('config:', str(Vars.cfg.data))
-
-
 def shell_bookshelf(inputs):
     refresh_bookshelf_list()
     if len(inputs) >= 2:
@@ -92,6 +72,7 @@ def shell_download_book(inputs):
             print('获取书籍信息失败, book_id:', inputs[1])
     else:
         print('未输入book_id:')
+
 
 def shell_update():
     if Vars.cfg.data.get('downloaded_book_id_list') is None or \
@@ -148,8 +129,6 @@ def shell(inputs):
         exit()
     elif inputs[0] == 'l' or inputs[0] == 'login':
         shell_login(inputs)
-    elif inputs[0].startswith('c'):
-        shell_config(inputs)
     elif inputs[0].startswith('books'):
         shell_bookshelf(inputs)
     elif inputs[0] == 'd' or inputs[0] == 'download':
