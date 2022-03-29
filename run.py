@@ -86,7 +86,7 @@ def shell_download_book(inputs):
         print('已经选择书籍《' + Vars.current_book.book_name + '》')
         Vars.current_book.get_division_list()
         Vars.current_book.get_chapter_catalog()
-        Vars.current_book.download_chapter(copy_dir=os.getcwd() + '/downloads/')
+        Vars.current_book.download_chapter()
         if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
             Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
             Vars.cfg.save()
