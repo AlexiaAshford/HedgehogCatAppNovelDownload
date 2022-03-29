@@ -1,7 +1,6 @@
 import threading
 import HbookerAPI
 from instance import *
-import shutil
 
 
 class Book:
@@ -56,7 +55,7 @@ class Book:
         for index, data in enumerate(self.chapter_list):
             if data['chapter_id'] + '.txt' in os.listdir(Vars.config_text) or data['auth_access'] == '0':
                 continue
-            thread = threading.Thread(target=self.download_single, args=(data['chapter_id'], len(self.chapter_list),))
+            thread = threading.Thread(target=self.download_thread, args=(data['chapter_id'], len(self.chapter_list),))
             self.threading_list.append(thread)
 
         for thread in self.threading_list:
@@ -65,8 +64,6 @@ class Book:
         for thread in self.threading_list:
             thread.join()
         self.export_txt()
-        if Vars.cfg.data.get('copy_start'):
-            self.copy_file(copy_dir)
         print('[提示][下载]', '《' + self.book_name + '》下载已完成')
 
     def export_txt(self):
@@ -75,33 +72,20 @@ class Book:
             file_info = write(Vars.config_text + "/" + file_name, 'r')
             write(Vars.out_text_file, "a", file_info)
 
-    def copy_file(self, copy_dir: str):
-        try:
-            if copy_dir is not None:
-                copy_dir = copy_dir.replace("?", "？")
-                file_dir, file_name = os.path.split(Vars.out_text_file)
-                if not os.path.isdir(copy_dir):
-                    os.makedirs(copy_dir)
-                shutil.copyfile(Vars.out_text_file, copy_dir + '/' + file_name)
-                shutil.copyfile(Vars.out_text_file, copy_dir + '/' + Vars.out_text_file)
-        except Exception as e:
-            print('[错误]', e)
-            print('复制文件时出错')
-
-    def download_single(self, chapter_id: str, division_chapter_length: int):
+    def download_thread(self, chapter_id: str, division_chapter_length: int):
         self.pool_sema.acquire()
         response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
-        response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, response['data']['command'])['data']['chapter_info']
-        if response2.get('code') == '100000' and response2.get('chapter_title') is not None:
-            chapter_title = "第"+response2['chapter_index']+"章 "+response2['chapter_title'].replace("#G9uf", "")
-            chapter_content = HbookerAPI.CryptoUtil.decrypt(response2['txt_content'], response['data']['command'])
-            chapter_info = "{}\n{}\n{}".format(chapter_title, chapter_content.decode('utf-8'), response2['author_say'])
+        response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, response['data']['command'])
+        if response2.get('code') == '100000' and response2['data']['chapter_info']['chapter_title'] is not None:
+            chapter_info = response2['data']['chapter_info']
+            chapter_title = "第" + chapter_info['chapter_index'] + "章 " + chapter_info['chapter_title']
+            chapter_content = HbookerAPI.CryptoUtil.decrypt(chapter_info['txt_content'], response['data']['command'])
+            chapter_info = "{}\n{}".format(chapter_title.replace("#G9uf", ""), chapter_content.decode('utf-8'))
             write(Vars.config_text + "/" + chapter_id + ".txt", 'w', chapter_info)
             self.current_progress += 1
             print('[下载进度]: {}/{}'.format(self.current_progress, division_chapter_length), end="\r")
             self.pool_sema.release()
-            return True
         else:
+            self.current_progress += 1
             print('[提示][下载]chapter_id:', chapter_id, ', 该章节为空章节，标记为已下载')
             self.pool_sema.release()
-            return True
