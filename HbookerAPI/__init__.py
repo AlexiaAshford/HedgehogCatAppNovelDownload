@@ -40,7 +40,6 @@ class SignUp:
             print("Error:", response.get('tip'), "请先登入账号！")
 
 
-
 class BookShelf:
     @staticmethod
     def get_shelf_list():

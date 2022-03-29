@@ -14,10 +14,6 @@ def refresh_bookshelf_list():
             BookShelfList.append(BookShelf(shelf))
     for shelf in BookShelfList:
         shelf.show_info()
-    if len(BookShelfList) == 1:
-        shell_bookshelf(['bookshelf', '1'])
-    else:
-        print('可输入"bookshelf <书架编号>"来选择/切换书架')
 
 
 def shell_login(inputs):
@@ -59,40 +55,43 @@ def shell_config(inputs):
 
 
 def shell_bookshelf(inputs):
+    refresh_bookshelf_list()
     if len(inputs) >= 2:
         Vars.current_bookshelf = get_bookshelf_by_index(inputs[1])
-        if Vars.current_bookshelf is None:
-            print('请输入正确的参数')
-        else:
-            print('已经选择书架: "' + Vars.current_bookshelf.shelf_name + '"')
-            Vars.current_bookshelf.get_book_list()
-            Vars.current_bookshelf.show_book_list()
-            for book in Vars.current_bookshelf.BookList:
-                book.get_division_list()
-                book.get_chapter_catalog()
-                book.download_chapter(copy_dir=os.getcwd() + '/downloads')
-                if Vars.cfg.data['downloaded_book_id_list'].count(book.book_id) == 0:
-                    Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
-                    Vars.cfg.save()
-            print('书架下载已完成')
     else:
-        refresh_bookshelf_list()
+        Vars.current_bookshelf = get_bookshelf_by_index('1')
+    if Vars.current_bookshelf is None:
+        print('请输入正确的参数')
+    else:
+        print('已经选择书架: "' + Vars.current_bookshelf.shelf_name + '"')
+        Vars.current_bookshelf.get_book_list()
+        Vars.current_bookshelf.show_book_list()
+        for book in Vars.current_bookshelf.BookList:
+            book.get_division_list()
+            book.get_chapter_catalog()
+            book.download_chapter()
+            if Vars.cfg.data['downloaded_book_id_list'].count(book.book_id) == 0:
+                Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
+                Vars.cfg.save()
+        print('书架下载已完成')
 
 
 def shell_download_book(inputs):
-    Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1]).get('data')
-    if Vars.current_book is not None:
-        Vars.current_book = Book(book_info=Vars.current_book.get('book_info'))
-        print('已经选择书籍《' + Vars.current_book.book_name + '》')
-        Vars.current_book.get_division_list()
-        Vars.current_book.get_chapter_catalog()
-        Vars.current_book.download_chapter()
-        if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
-            Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
-            Vars.cfg.save()
+    if len(inputs) >= 2:
+        Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1]).get('data')
+        if Vars.current_book is not None:
+            Vars.current_book = Book(book_info=Vars.current_book.get('book_info'))
+            print('开始下载书籍《' + Vars.current_book.book_name + '》')
+            Vars.current_book.get_division_list()
+            Vars.current_book.get_chapter_catalog()
+            Vars.current_book.download_chapter()
+            if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
+                Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
+                Vars.cfg.save()
+        else:
+            print('获取书籍信息失败, book_id:', inputs[1])
     else:
-        print('获取书籍信息失败, book_id:', inputs[1])
-
+        print('未输入book_id:')
 
 def shell_update():
     if Vars.cfg.data.get('downloaded_book_id_list') is None or \
@@ -105,7 +104,7 @@ def shell_update():
             Vars.current_book = Book(None, Vars.current_book['book_info'])
             Vars.current_book.get_division_list()
             Vars.current_book.get_chapter_catalog()
-            Vars.current_book.download_chapter(copy_dir=os.getcwd() + '/Hbooker/updates')
+            Vars.current_book.download_chapter()
         else:
             print('[提示]获取书籍信息失败, book_id:', book_id)
     print('[提示]书籍更新已完成')
@@ -156,7 +155,7 @@ def shell(inputs):
     elif inputs[0] == 'd' or inputs[0] == 'download':
         shell_download_book(inputs)
     elif inputs[0] == 'bs' or inputs[0] == 'bookshelf':
-        shell_download_book(inputs)
+        shell_bookshelf(inputs)
     elif inputs[0] == 'up' or inputs[0] == 'updata':
         shell_update()
 

@@ -33,17 +33,15 @@ class BookShelf:
         response = HbookerAPI.BookShelf.get_shelf_book_list(self.shelf_id)
         if response.get('code') == '100000':
             self.BookList.clear()
-            i = 1
-            for data in response['data']['book_list']:
-                self.BookList.append(Book(str(i), data['book_info']))
-                i += 1
+            for i, data in enumerate(response['data']['book_list'], start=1):
+                self.BookList.append(Book(book_info=data['book_info'], index=str(i)))
 
     def show_book_list(self):
         for book in self.BookList:
-            print('书籍编号:', book.index, ', 标题:', book.book_name, ', 作者:',
-                  book.author_name)
-            print('  最新章节:', book.last_chapter_info['chapter_title'], ', 更新时间:',
-                  book.last_chapter_info['uptime'])
+            print('index:', book.index, f'《{book.book_name}》:',
+                  '\n\tauthor_name:', book.author_name,  'last_chapter:', book.last_chapter_info['chapter_title'],
+                  'last_uptime:', book.last_chapter_info['uptime']
+                  )
 
     def get_book(self, index):
         for book in self.BookList:

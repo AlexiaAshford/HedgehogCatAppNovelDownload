@@ -5,7 +5,7 @@ from instance import *
 
 class Book:
 
-    def __init__(self, book_info, index=None, ):
+    def __init__(self, book_info, index=None):
         self.index = index
         self.current_progress = 0
         self.threading_list = []
@@ -26,8 +26,9 @@ class Book:
             self.division_list = response['data']['division_list']
 
     def show_division_list(self):
+        print("开始加载目录信息...")
         for division in self.division_list:
-            print('第{}卷'.format(division['division_index']), ', 分卷名:', division['division_name'])
+            print('第{}卷'.format(division['division_index']), '分卷名:', division['division_name'])
 
     def get_chapter_catalog(self):
         self.chapter_list.clear()
@@ -41,8 +42,7 @@ class Book:
         self.show_chapter_latest()
 
     def show_chapter_latest(self):
-        print('\t最新章节: \t章节编号:', self.chapter_list[-1]['chapter_index'], ', 章节标题:',
-              self.chapter_list[-1]['chapter_title'])
+        print('章节编号:', self.chapter_list[-1]['chapter_index'], ', 章节标题:', self.chapter_list[-1]['chapter_title'])
 
     def download_chapter(self):
         if len(self.chapter_list) == 0:
