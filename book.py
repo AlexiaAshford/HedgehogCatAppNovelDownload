@@ -11,7 +11,6 @@ class Book:
         self.threading_list = []
         self.division_list = []
         self.chapter_list = []
-        self.division_chapter_list = {}
         self.book_info = book_info
         self.book_id = book_info['book_id']
         self.book_name = book_info['book_name']
@@ -30,14 +29,18 @@ class Book:
         for division in self.division_list:
             print('第{}卷'.format(division['division_index']), '分卷名:', division['division_name'])
 
-    def get_chapter_catalog(self):
+    def get_chapter_catalog(self, max_retry=10):
         self.chapter_list.clear()
         self.show_division_list()
         for division in self.division_list:
-            response = HbookerAPI.Book.get_chapter_update(division['division_id'])
-            if response.get('code') == '100000':
-                self.chapter_list.extend(response['data']['chapter_list'])
-                self.division_chapter_list[division['division_name']] = response['data']['chapter_list']
+            for retry in range(max_retry):
+                response = HbookerAPI.Book.get_chapter_update(division['division_id'])
+                if response.get('code') == '100000':
+                    self.chapter_list.extend(response['data']['chapter_list'])
+                    break
+                else:
+                    print("code:", response.get('code'), "error:", response.get("tip"))
+
         self.chapter_list.sort(key=lambda x: int(x['chapter_index']))
         self.show_chapter_latest()
 
@@ -83,5 +86,8 @@ class Book:
             self.pool_sema.release()
         else:
             self.show_progress(self.current_progress, division_chapter_length)
-            print('[提示][下载]chapter_id:', chapter_id, ', 该章节为空章节，标记为已下载')
+            if response2['data']['chapter_info']['chapter_title'] is None:
+                print('chapter_id:', chapter_id, ', 该章节为空章节，标记为已下载')
+            else:
+                print(response2['data']['chapter_info']['chapter_title'], ', 该章节为空章节，标记为已下载')
             self.pool_sema.release()
