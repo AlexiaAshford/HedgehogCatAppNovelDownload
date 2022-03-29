@@ -47,9 +47,13 @@ def shell_bookshelf(inputs):
         Vars.current_bookshelf.get_book_list()
         Vars.current_bookshelf.show_book_list()
         for book in Vars.current_bookshelf.BookList:
+            print('开始下载书籍《' + book.book_name + '》')
             book.get_division_list()
             book.get_chapter_catalog()
-            book.download_chapter()
+            if len(book.chapter_list) != 0:
+                Vars.out_text_file = os.path.join(os.getcwd(), 'downloads', book.book_name + '.txt')
+                Vars.config_text = os.path.join(os.getcwd(), 'Hbooker', book.book_name)
+                book.download_chapter()
             if Vars.cfg.data['downloaded_book_id_list'].count(book.book_id) == 0:
                 Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
                 Vars.cfg.save()
@@ -64,7 +68,12 @@ def shell_download_book(inputs):
             print('开始下载书籍《' + Vars.current_book.book_name + '》')
             Vars.current_book.get_division_list()
             Vars.current_book.get_chapter_catalog()
-            Vars.current_book.download_chapter()
+            if len(Vars.current_book.chapter_list) != 0:
+                Vars.out_text_file = os.path.join(os.getcwd(), 'downloads', Vars.current_book.book_name + '.txt')
+                Vars.config_text = os.path.join(os.getcwd(), 'Hbooker', Vars.current_book.book_name)
+                Vars.current_book.download_chapter()
+            else:
+                print(Vars.current_book.book_name, "没有需要下载的章节！")
             if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
                 Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
                 Vars.cfg.save()
@@ -85,7 +94,10 @@ def shell_update():
             Vars.current_book = Book(None, Vars.current_book['book_info'])
             Vars.current_book.get_division_list()
             Vars.current_book.get_chapter_catalog()
-            Vars.current_book.download_chapter()
+            if len(Vars.current_book.chapter_list) != 0:
+                Vars.out_text_file = os.path.join(os.getcwd(), 'downloads', Vars.current_book.book_name + '.txt')
+                Vars.config_text = os.path.join(os.getcwd(), 'Hbooker', Vars.current_book.book_name)
+                Vars.current_book.download_chapter()
         else:
             print('[提示]获取书籍信息失败, book_id:', book_id)
     print('[提示]书籍更新已完成')

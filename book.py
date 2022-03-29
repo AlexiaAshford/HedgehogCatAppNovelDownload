@@ -45,13 +45,7 @@ class Book:
         print('章节编号:', self.chapter_list[-1]['chapter_index'], ', 章节标题:', self.chapter_list[-1]['chapter_title'])
 
     def download_chapter(self):
-        if len(self.chapter_list) == 0:
-            print('暂无书籍目录')
-            return
-
-        Vars.out_text_file = os.path.join(os.getcwd(), 'downloads', self.book_name + '.txt')
-        Vars.config_text = os.path.join(os.getcwd(), 'Hbooker', self.book_name)
-        Config("", Vars.config_text)
+        Config("", Vars.config_text), Config(Vars.out_text_file, "./downloads")
         for index, data in enumerate(self.chapter_list):
             if data['chapter_id'] + '.txt' in os.listdir(Vars.config_text) or data['auth_access'] == '0':
                 continue
@@ -67,7 +61,6 @@ class Book:
         print('[提示][下载]', '《' + self.book_name + '》下载完成,已导出文件')
 
     def export_txt(self):
-        Config(Vars.out_text_file, "./downloads")
         for file_name in os.listdir(Vars.config_text):
             file_info = write(Vars.config_text + "/" + file_name, 'r')
             write(Vars.out_text_file, "a", "\n\n" + file_info)
