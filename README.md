@@ -1,11 +1,26 @@
-# HbookerAppNovelDownloader 老版本改写的
-- 原作者: [hang333](https://github.com/hang333)
- - 欢乐书客App版小说下载器，支持已付费章节下载，书籍内插图下载
- - 支持导出文件格式：txt，epub(可能会继续添加)，文件将会被下载至 ../HBooker 目录下
- - 支持书籍的章节更新/更新检查
+# _HedgehogCatAppNovel_
+- 本项目由 HbookerAppNovelDownloader 老版本改写的， 原作者: [hang333](https://github.com/hang333)
+- 刺猬猫【原名欢乐书客】 小说下载器，基于刺猬猫API实现
+- 支持`账号登入`
+- 支持`付费章节下载`
+- 支持`命令行操作`
+- 支持`书籍的章节更新`/`更新检查`
+- 支持`多线程下载`，默认线程为**32**，可在本地配置文件修改线程数目
+- 文件存储位置 `./Hbooker` 以及 `./downloads` 目录下
+
+##  类似控制台的操作
+```bash
+输入首字母
+h  | help               --- 显示说明
+q  | quit               --- 退出正在运作的程序
+l  | account/password   --- 登入刺猬猫账号
+d  | bookid             --- 输入book id下载小说
+u  | updata             --- 更新下载过的小说
+bs | bookshelfid        --- 显示书架信息, 可选书架
+```
+- **登入账号** ```python run.py l account password```
+- **下载书籍** ```python run.py d bookid```
 ## 需求环境
- * Python3
+ * Python3.6以上
  * requests
  * pycrypto或pycryptodome
-## 用法
- - 类似控制台的操作，详情见代码
