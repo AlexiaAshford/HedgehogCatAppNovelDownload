@@ -7,8 +7,6 @@ import re
 def refresh_bookshelf_list():
     response = HbookerAPI.BookShelf.get_shelf_list()
     if response.get('code') == '100000':
-        Vars.cfg.data['shelf_list'] = response['data']['shelf_list']
-        Vars.cfg.save()
         BookShelfList.clear()
         for shelf in Vars.cfg.data['shelf_list']:
             BookShelfList.append(BookShelf(shelf))
@@ -109,8 +107,8 @@ def update_config():
         Vars.cfg.data['common_params'] = {'login_token': "", 'account': ""}
     if Vars.cfg.data.get('downloaded_book_id_list') is None:
         Vars.cfg.data['downloaded_book_id_list'] = []
-    if Vars.cfg.data.get('copy_start') is None:
-        Vars.cfg.data['copy_start'] = False
+    if not isinstance(Vars.cfg.data.get('max_thread'), int):
+        Vars.cfg.data['max_thread'] = 32
     Vars.cfg.save()
     HbookerAPI.set_common_params(Vars.cfg.data.get('common_params'))
 
