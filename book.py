@@ -23,15 +23,11 @@ class Book:
         response = HbookerAPI.Book.get_division_list(self.book_id)
         if response.get('code') == '100000':
             self.division_list = response['data']['division_list']
-
-    def show_division_list(self):
-        print("开始加载目录信息...")
-        for division in self.division_list:
-            print('第{}卷'.format(division['division_index']), '分卷名:', division['division_name'])
+            for division in self.division_list:
+                print('第{}卷'.format(division['division_index']), '分卷名:', division['division_name'])
 
     def get_chapter_catalog(self, max_retry=10):
         self.chapter_list.clear()
-        self.show_division_list()
         for division in self.division_list:
             for retry in range(max_retry):
                 response = HbookerAPI.Book.get_chapter_update(division['division_id'])
@@ -45,7 +41,10 @@ class Book:
         self.show_chapter_latest()
 
     def show_chapter_latest(self):
-        print('章节编号:', self.chapter_list[-1]['chapter_index'], ', 章节标题:', self.chapter_list[-1]['chapter_title'])
+        shield_chapter_length = len([i for i in self.chapter_list if i['chapter_title'] == '该章节未审核通过'])
+        if shield_chapter_length != 0:
+            print("[提示]本书一共有", shield_chapter_length, "章被屏蔽")
+        print('[提示]最新章节:', self.chapter_list[-1]['chapter_title'], "\t更新时间:", self.chapter_list[-1]['mtime'])
 
     def download_chapter(self):
         Config("", Vars.config_text), Config(Vars.out_text_file, "./downloads")
@@ -60,13 +59,15 @@ class Book:
 
         for thread in self.threading_list:
             thread.join()
+
         self.export_txt()
-        print('[提示][下载]', '《' + self.book_name + '》下载完成,已导出文件')
 
     def export_txt(self):
         for file_name in os.listdir(Vars.config_text):
             file_info = write(Vars.config_text + "/" + file_name, 'r')
-            write(Vars.out_text_file, "a", "\n\n" + file_info)
+            with open(Vars.out_text_file, "a", encoding='utf-8') as _file:
+                _file.write("\n\n" + file_info)
+        print('[提示] 《' + self.book_name + '》下载完成,已导出文件')
 
     def show_progress(self, current, length):
         self.current_progress += 1
@@ -74,20 +75,23 @@ class Book:
 
     def download_thread(self, chapter_id: str, division_chapter_length: int):
         self.pool_sema.acquire()
-        response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
-        response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, response['data']['command'])
-        if response2.get('code') == '100000' and response2['data']['chapter_info']['chapter_title'] is not None:
-            chapter_info = response2['data']['chapter_info']
-            chapter_title = "第" + chapter_info['chapter_index'] + "章: " + chapter_info['chapter_title']
-            chapter_content = HbookerAPI.CryptoUtil.decrypt(chapter_info['txt_content'], response['data']['command'])
-            chapter_info = "{}\n{}".format(chapter_title.replace("#G9uf", ""), chapter_content.decode('utf-8'))
-            write(Vars.config_text + "/" + chapter_id + ".txt", 'w', chapter_info)
+        command = HbookerAPI.Chapter.get_chapter_command(chapter_id)['data']['command']
+        response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, command)
+        if response2.get('code') == '100000' and response2['data']['chapter_info']['chapter_title'] != '该章节未审核通过':
+            if response2['data']['chapter_info']['chapter_title'] is None:
+                return False
+            txt_content = response2['data']['chapter_info']['txt_content']
+            with open(Vars.config_text + "/" + chapter_id + ".txt", 'w', encoding='utf-8') as _file:
+                _file.write("第"+response2['data']['chapter_info']['chapter_index']+"章: ")
+                _file.write(response2['data']['chapter_info']['chapter_title'].replace("#G9uf", "") + "\n")
+                _file.write(HbookerAPI.CryptoUtil.decrypt(txt_content, command).decode('utf-8'))
+
             self.show_progress(self.current_progress, division_chapter_length)
             self.pool_sema.release()
         else:
             self.show_progress(self.current_progress, division_chapter_length)
-            if response2['data']['chapter_info']['chapter_title'] is None:
-                print('chapter_id:', chapter_id, ', 该章节为空章节，标记为已下载')
+            if response2['data']['chapter_info']['chapter_title'] == '该章节未审核通过':
+                print('chapter_id:', chapter_id, ', 该章节为屏蔽章节，不进行下载')
             else:
                 print(response2['data']['chapter_info']['chapter_title'], ', 该章节为空章节，标记为已下载')
             self.pool_sema.release()
