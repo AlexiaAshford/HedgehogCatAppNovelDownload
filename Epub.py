@@ -6,7 +6,6 @@ class EpubFile:
     def __init__(self):
         self.epub = epub.EpubBook()
         self.EpubList = list()
-        self.path = os.path.join
         self.epub.set_language('zh-CN')
         self.epub.set_identifier(Vars.current_book.book_id)
         self.epub.set_title(Vars.current_book.book_name)
@@ -40,9 +39,8 @@ class EpubFile:
         self.epub.toc = tuple(self.EpubList)
         self.epub.spine = ['nav']
         self.epub.spine.extend(self.EpubList)
-        self.epub.add_item(epub.EpubNcx())
-        self.epub.add_item(epub.EpubNav())
-        epub.write_epub(self.path(
+        self.epub.add_item(epub.EpubNcx()), self.epub.add_item(epub.EpubNav())
+        epub.write_epub(os.path.join(
             Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt',
             Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.epub'), self.epub, {}
         )

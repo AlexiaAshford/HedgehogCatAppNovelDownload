@@ -1,5 +1,6 @@
 import sys
-from book import *
+import book
+from instance import *
 import HbookerAPI
 import Epub
 import re
@@ -22,17 +23,17 @@ def shell_bookshelf():
     book_list = HbookerAPI.BookShelf.shelf_list(shelf_list['shelf_id'])
     if book_list.get('code') == '100000':
         for index, data in enumerate(book_list['data']['book_list']):
-            Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index + 1)))
+            Vars.current_bookshelf.append(book.Book(book_info=data['book_info'], index=str(index + 1)))
 
-        for book in Vars.current_bookshelf:
-            print("\nindex:", book.index)
-            print('name:', book.book_name, " author:", book.author_name, " id:", book.book_id)
-            print("time:", book.last_chapter_info['uptime'], " chapter:", book.last_chapter_info['chapter_title'])
+        for book_info in Vars.current_bookshelf:
+            print("\nindex:", book_info.index)
+            print('name:', book_info.book_name, " author:", book_info.author_name, " id:", book_info.book_id)
+            print("time:", book_info.last_chapter['uptime'], "chapter:", book_info.last_chapter['chapter_title'])
 
         input_shelf_book_index = get("输入书籍编号:").strip()
-        for book in Vars.current_bookshelf:
-            if book.index == input_shelf_book_index:
-                shell_download_book(["", book.book_id])
+        for book_info in Vars.current_bookshelf:
+            if book_info.index == input_shelf_book_index:
+                shell_download_book(["", book_info.book_id])
         Vars.current_bookshelf.clear()
     else:
         print("code:", book_list.get('code'), "Msg:", book_list.get("tip"))
@@ -59,12 +60,11 @@ def shell_download_book(inputs):
     if len(inputs) >= 2:
         Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1]).get('data')
         if Vars.current_book is not None:
-            Vars.current_book = Book(book_info=Vars.current_book.get('book_info'))
+            Vars.current_book = book.Book(book_info=Vars.current_book.get('book_info'))
+            print('开始下载书籍《' + Vars.current_book.book_name + '》')
             Vars.current_epub = Epub.EpubFile()
             Vars.current_epub.add_intro()
-            print('开始下载书籍《' + Vars.current_book.book_name + '》')
-            Vars.current_book.get_division_list()
-            Vars.current_book.get_chapter_catalog()
+            Vars.current_book.get_division_list(), Vars.current_book.get_chapter_catalog()
             if len(Vars.current_book.chapter_list) != 0:
                 Vars.out_text_file = Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt'
                 Vars.config_text = Vars.cfg.data['save_path'] + Vars.current_book.book_name

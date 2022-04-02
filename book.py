@@ -16,7 +16,7 @@ class Book:
         self.book_name = book_info['book_name']
         self.author_name = book_info['author_name']
         self.cover = book_info['cover'].replace(' ', '')
-        self.last_chapter_info = book_info['last_chapter_info']
+        self.last_chapter = book_info['last_chapter_info']
         self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data['max_thread'])
 
     def get_division_list(self):
