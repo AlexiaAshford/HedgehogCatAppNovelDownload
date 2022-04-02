@@ -1,10 +1,10 @@
 import sys
-from bookshelf import *
+from book import *
 import HbookerAPI
 import re
 
 
-def shell_bookshelf(inputs):
+def shell_bookshelf():
     Vars.current_bookshelf.clear()
     response = HbookerAPI.BookShelf.get_shelf_list()
     if response.get('code') != '100000' and response.get('tip') is None:
@@ -14,13 +14,13 @@ def shell_bookshelf(inputs):
         print('书架编号:', shelf['shelf_index'], ', 书架名:', shelf['shelf_name'])
     if len(response['data']['shelf_list']) > 1:
         input_shelf_id = get("输入书架编号:").strip()
-        shelf_list = response['data']['shelf_list'][int(input_shelf_id)-1]
+        shelf_list = response['data']['shelf_list'][int(input_shelf_id) - 1]
     else:
         shelf_list = response['data']['shelf_list'][0]
         print('检测到账号只有一个书架，已自动选择，书架名:', shelf_list['shelf_name'])
 
     for index, data in enumerate(HbookerAPI.BookShelf.shelf_list(shelf_list['shelf_id'])['data']['book_list']):
-        Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index+1)))
+        Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index + 1)))
 
     for book in Vars.current_bookshelf:
         print("\nindex:", book.index)
@@ -49,7 +49,6 @@ def shell_login(inputs):
             print(response.get('tip'))
     else:
         print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
-
 
 
 def shell_download_book(inputs):
@@ -139,7 +138,7 @@ def shell(inputs):
     elif inputs[0] == 'd' or inputs[0] == 'download':
         shell_download_book(inputs)
     elif inputs[0] == 'bs' or inputs[0] == 'bookshelf':
-        shell_bookshelf(inputs)
+        shell_bookshelf()
     elif inputs[0] == 'up' or inputs[0] == 'updata':
         shell_update()
 
