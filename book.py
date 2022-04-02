@@ -51,7 +51,7 @@ class Book:
         for index, data in enumerate(self.chapter_list):
             if data['chapter_id'] + '.txt' in os.listdir(Vars.config_text) or data['auth_access'] == '0':
                 continue
-            thread = threading.Thread(target=self.download_thread, args=(data['chapter_id'], len(self.chapter_list),))
+            thread = threading.Thread(target=self.download_threading, args=(data['chapter_id'], len(self.chapter_list),))
             self.threading_list.append(thread)
 
         for thread in self.threading_list:
@@ -67,13 +67,14 @@ class Book:
             file_info = write(Vars.config_text + "/" + file_name, 'r')
             with open(Vars.out_text_file, "a", encoding='utf-8') as _file:
                 _file.write("\n\n" + file_info)
+        Vars.current_epub.save()
         print('[提示] 《' + self.book_name + '》下载完成,已导出文件')
 
     def show_progress(self, current, length):
         self.current_progress += 1
         print('[{} 下载进度]: {}/{}'.format(self.book_name, current, length), end="\r")
 
-    def download_thread(self, chapter_id: str, division_chapter_length: int):
+    def download_threading(self, chapter_id: str, division_chapter_length: int):
         self.pool_sema.acquire()
         command = HbookerAPI.Chapter.get_chapter_command(chapter_id)['data']['command']
         response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, command)
@@ -85,7 +86,11 @@ class Book:
                 _file.write("第"+response2['data']['chapter_info']['chapter_index']+"章: ")
                 _file.write(response2['data']['chapter_info']['chapter_title'].replace("#G9uf", "") + "\n")
                 _file.write(HbookerAPI.HttpUtil.decrypt(txt_content, command).decode('utf-8'))
-
+            Vars.current_epub.add_chapter(
+                response2['data']['chapter_info']['chapter_title'].replace("#G9uf", ""),
+                HbookerAPI.HttpUtil.decrypt(txt_content, command).decode('utf-8'),
+                response2['data']['chapter_info']['chapter_index']
+            )
             self.show_progress(self.current_progress, division_chapter_length)
             self.pool_sema.release()
         else:

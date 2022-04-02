@@ -43,6 +43,6 @@ class EpubFile:
         self.epub.add_item(epub.EpubNcx())
         self.epub.add_item(epub.EpubNav())
         epub.write_epub(self.path(
-            Vars.cfg.data.get('save_book'), Vars.current_book.book_name,
-            Vars.current_book.book_name + '.epub'), self.epub, {}
+            Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt',
+            Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.epub'), self.epub, {}
         )
