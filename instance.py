@@ -43,6 +43,7 @@ class Vars:
     cfg = Config(os.getcwd() + '/config.json', os.getcwd())
     current_bookshelf = []
     current_book = None
+    current_epub = None
     out_text_file = None
     config_text = None
     help_info = [

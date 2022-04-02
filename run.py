@@ -1,6 +1,7 @@
 import sys
 from book import *
 import HbookerAPI
+import Epub
 import re
 
 
@@ -59,6 +60,8 @@ def shell_download_book(inputs):
         Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1]).get('data')
         if Vars.current_book is not None:
             Vars.current_book = Book(book_info=Vars.current_book.get('book_info'))
+            # Vars.current_epub = Epub.EpubFile()
+            # Vars.current_epub.add_intro()
             print('开始下载书籍《' + Vars.current_book.book_name + '》')
             Vars.current_book.get_division_list()
             Vars.current_book.get_chapter_catalog()
