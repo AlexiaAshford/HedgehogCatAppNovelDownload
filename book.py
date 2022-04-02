@@ -24,7 +24,7 @@ class Book:
         if response.get('code') == '100000':
             self.division_list = response['data']['division_list']
             for division in self.division_list:
-                print('第{}卷'.format(division['division_index']), '分卷名:', division['division_name'])
+                print('[提示]第{}卷'.format(division['division_index']), '分卷名:', division['division_name'])
 
     def get_chapter_catalog(self, max_retry=10):
         self.chapter_list.clear()

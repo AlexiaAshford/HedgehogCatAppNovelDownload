@@ -10,26 +10,27 @@ def shell_bookshelf(inputs):
     if response.get('code') != '100000' and response.get('tip') is None:
         print("code:", response.get('code'), "Msg:", response.get("tip"))
         return False
+    for shelf in response['data']['shelf_list']:
+        print('书架编号:', shelf['shelf_index'], ', 书架名:', shelf['shelf_name'])
+    if len(response['data']['shelf_list']) > 1:
+        input_shelf_id = get("输入书架编号:").strip()
+        shelf_list = response['data']['shelf_list'][int(input_shelf_id)-1]
     else:
-        shelf_list = response['data']['shelf_list']
+        shelf_list = response['data']['shelf_list'][0]
+        print('检测到账号只有一个书架，已自动选择，书架名:', shelf_list['shelf_name'])
 
-    if len(shelf_list) > 1:
-        for shelf in shelf_list:
-            print('书架编号:', shelf['shelf_index'], ', 书架名:', shelf['shelf_name'])
-            for index, data in enumerate(HbookerAPI.BookShelf.shelf_list(shelf['shelf_id'])['data']['book_list']):
-                Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index+1)))
-    else:
-        print('检测到账号只有一个书架，已自动选择，书架名:', shelf_list[0]['shelf_name'])
-        for index, data in enumerate(HbookerAPI.BookShelf.shelf_list(shelf_list[0]['shelf_id'])['data']['book_list']):
-            Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index+1)))
+    for index, data in enumerate(HbookerAPI.BookShelf.shelf_list(shelf_list['shelf_id'])['data']['book_list']):
+        Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index+1)))
 
     for book in Vars.current_bookshelf:
         print("\nindex:", book.index)
         print('name:', book.book_name, " author:", book.author_name, " id:", book.book_id)
         print("time:", book.last_chapter_info['uptime'], " chapter:", book.last_chapter_info['chapter_title'])
 
+    input_shelf_book_index = get("输入书籍编号:").strip()
     for book in Vars.current_bookshelf:
-        shell_download_book(["", book.book_id])
+        if book.index == input_shelf_book_index:
+            shell_download_book(["", book.book_id])
 
 
 def shell_login(inputs):
