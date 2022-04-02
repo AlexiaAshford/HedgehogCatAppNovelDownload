@@ -45,7 +45,7 @@ class BookShelf:
         return post(UrlConstants.BOOKSHELF_GET_SHELF_LIST)
 
     @staticmethod
-    def get_shelf_book_list(shelf_id, last_mod_time='0', direction='prev'):
+    def shelf_list(shelf_id, last_mod_time='0', direction='prev'):
         data = {'shelf_id': shelf_id, 'last_mod_time': last_mod_time, 'direction': direction}
         return post(UrlConstants.BOOKSHELF_GET_SHELF_BOOK_LIST, data)
 

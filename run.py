@@ -4,30 +4,30 @@ import HbookerAPI
 import re
 
 
-def refresh_bookshelf_list():
+def shell_bookshelf(inputs):
     Vars.current_bookshelf.clear()
     response = HbookerAPI.BookShelf.get_shelf_list()
     if response.get('code') != '100000' and response.get('tip') is None:
         print("code:", response.get('code'), "Msg:", response.get("tip"))
         return False
-    if len(response['data']['shelf_list']) > 1:
-        for shelf in response['data']['shelf_list']:
-            print('书架编号:', shelf['shelf_index'], ', 书架名:', shelf['shelf_name'])
-            response2 = HbookerAPI.BookShelf.get_shelf_book_list(shelf['shelf_id'])
-            if response2.get('code') == '100000':
-                for i, data in enumerate(response2['data']['book_list'], start=1):
-                    Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(i)))
     else:
-        print('检测到账号只有一个书架，已自动选择，书架名:', response['data']['shelf_list'][0]['shelf_name'])
-        response2 = HbookerAPI.BookShelf.get_shelf_book_list(response['data']['shelf_list'][0]['shelf_id'])
-        if response2.get('code') == '100000':
-            for i, data in enumerate(response2['data']['book_list'], start=1):
-                Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(i)))
+        shelf_list = response['data']['shelf_list']
+
+    if len(shelf_list) > 1:
+        for shelf in shelf_list:
+            print('书架编号:', shelf['shelf_index'], ', 书架名:', shelf['shelf_name'])
+            for index, data in enumerate(HbookerAPI.BookShelf.shelf_list(shelf['shelf_id'])['data']['book_list']):
+                Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index+1)))
+    else:
+        print('检测到账号只有一个书架，已自动选择，书架名:', shelf_list[0]['shelf_name'])
+        for index, data in enumerate(HbookerAPI.BookShelf.shelf_list(shelf_list[0]['shelf_id'])['data']['book_list']):
+            Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index+1)))
 
     for book in Vars.current_bookshelf:
-        print(f'index:{book.index}\n' f'书籍名称:{book.book_name}', '\t作者名称:', book.author_name,
-              '最新章节:', book.last_chapter_info['chapter_title'], '\t更新时间:', book.last_chapter_info['uptime']
-              )
+        print("\nindex:", book.index)
+        print('name:', book.book_name, " author:", book.author_name, " id:", book.book_id)
+        print("time:", book.last_chapter_info['uptime'], " chapter:", book.last_chapter_info['chapter_title'])
+
     for book in Vars.current_bookshelf:
         shell_download_book(["", book.book_id])
 
@@ -49,31 +49,6 @@ def shell_login(inputs):
     else:
         print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
 
-
-def shell_bookshelf(inputs):
-    if len(inputs) >= 2:
-        Vars.current_bookshelf = get_bookshelf_by_index(inputs[1])
-    else:
-        refresh_bookshelf_list()
-        return
-    if Vars.current_bookshelf is None:
-        print('请输入正确的参数')
-    else:
-        print('已经选择书架: "' + Vars.current_bookshelf.shelf_name + '"')
-        Vars.current_bookshelf.get_book_list()
-        Vars.current_bookshelf.show_book_list()
-        for book in Vars.current_bookshelf.BookList:
-            print('开始下载书籍《' + book.book_name + '》')
-            book.get_division_list()
-            book.get_chapter_catalog()
-            if len(book.chapter_list) != 0:
-                Vars.out_text_file = Vars.cfg.data['out_path'] + book.book_name + '.txt'
-                Vars.config_text = Vars.cfg.data['save_path'] + book.book_name
-                book.download_chapter()
-            if Vars.cfg.data['downloaded_book_id_list'].count(book.book_id) == 0:
-                Vars.cfg.data['downloaded_book_id_list'].append(book.book_id)
-                Vars.cfg.save()
-        print('书架下载已完成')
 
 
 def shell_download_book(inputs):
@@ -160,8 +135,6 @@ def shell(inputs):
         exit()
     elif inputs[0] == 'l' or inputs[0] == 'login':
         shell_login(inputs)
-    elif inputs[0].startswith('books'):
-        shell_bookshelf(inputs)
     elif inputs[0] == 'd' or inputs[0] == 'download':
         shell_download_book(inputs)
     elif inputs[0] == 'bs' or inputs[0] == 'bookshelf':

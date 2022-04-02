@@ -30,7 +30,7 @@ class BookShelf:
         print('书架编号:', self.shelf_index, ', 书架名:', self.shelf_name)
 
     def get_book_list(self):
-        response = HbookerAPI.BookShelf.get_shelf_book_list(self.shelf_id)
+        response = HbookerAPI.BookShelf.shelf_list(self.shelf_id)
         if response.get('code') == '100000':
             self.BookList.clear()
             for i, data in enumerate(response['data']['book_list'], start=1):
