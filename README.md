@@ -11,12 +11,12 @@
 ##  类似控制台的操作
 ```bash
 输入首字母
-h  | help               --- 显示说明
-q  | quit               --- 退出正在运作的程序
-l  | account/password   --- 登入刺猬猫账号
-d  | bookid             --- 输入book id下载小说
-u  | updata             --- 更新下载过的小说
-bs | bookshelfid        --- 显示书架信息, 可选书架
+h  | help                       --- 显示说明
+q  | quit                       --- 退出正在运作的程序
+l  | account/password           --- 登入刺猬猫账号
+d  | bookid                     --- 输入book id下载小说
+u  | updata                     --- 更新下载过的小说
+bs | bookshelfid                --- 显示书架信息, 可选书架
 ```
 - **登入账号** ```python run.py l account password```
 - **下载书籍** ```python run.py d bookid```

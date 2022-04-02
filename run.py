@@ -82,22 +82,21 @@ def shell_download_book(inputs):
 
 
 def shell_update():
-    if Vars.cfg.data.get('downloaded_book_id_list') is None or \
-            len(Vars.cfg.data.get('downloaded_book_id_list')) == 0:
-        print('暂无已下载书籍')
-        return
-    for book_id in Vars.cfg.data['downloaded_book_id_list']:
-        Vars.current_book = HbookerAPI.Book.get_info_by_id(book_id).get('data')
-        if Vars.current_book is not None:
-            Vars.current_book = Book(None, Vars.current_book['book_info'])
-            Vars.current_book.get_division_list()
-            Vars.current_book.get_chapter_catalog()
-            if len(Vars.current_book.chapter_list) != 0:
-                Vars.out_text_file = os.path.join(os.getcwd(), 'downloads', Vars.current_book.book_name + '.txt')
-                Vars.config_text = os.path.join(os.getcwd(), 'Hbooker', Vars.current_book.book_name)
-                Vars.current_book.download_chapter()
-        else:
-            print('[提示]获取书籍信息失败, book_id:', book_id)
+    if len(Vars.cfg.data.get('downloaded_book_id_list')) == 0:
+        print('书单暂无可更新书籍，请检查config.json downloaded_book_id_list')
+    else:
+        for book_id in Vars.cfg.data['downloaded_book_id_list']:
+            Vars.current_book = HbookerAPI.Book.get_info_by_id(book_id).get('data')
+            if Vars.current_book is not None:
+                Vars.current_book = Book(None, Vars.current_book['book_info'])
+                Vars.current_book.get_division_list()
+                Vars.current_book.get_chapter_catalog()
+                if len(Vars.current_book.chapter_list) != 0:
+                    Vars.out_text_file = '/downloads/', Vars.current_book.book_name + '.txt'
+                    Vars.config_text = '/Hbooker/', Vars.current_book.book_name
+                    Vars.current_book.download_chapter()
+            else:
+                print('[提示]获取书籍信息失败, book_id:', book_id)
     print('[提示]书籍更新已完成')
 
 
@@ -109,6 +108,10 @@ def update_config():
         Vars.cfg.data['downloaded_book_id_list'] = []
     if not isinstance(Vars.cfg.data.get('max_thread'), int):
         Vars.cfg.data['max_thread'] = 32
+    if not isinstance(Vars.cfg.data.get('save_path'), str):
+        Vars.cfg.data['save_path'] = "./Hbooker/"
+    if not isinstance(Vars.cfg.data.get('out_path'), str):
+        Vars.cfg.data['out_path'] = "./downloads/"
     Vars.cfg.save()
     HbookerAPI.set_common_params(Vars.cfg.data.get('common_params'))
 
