@@ -47,7 +47,7 @@ class Book:
         print('[提示]最新章节:', self.chapter_list[-1]['chapter_title'], "\t更新时间:", self.chapter_list[-1]['mtime'])
 
     def download_chapter(self):
-        Config("", Vars.config_text), Config(Vars.out_text_file, "./downloads")
+        Config("", Vars.config_text), Config(Vars.out_text_file, Vars.cfg.data['out_path'])
         for index, data in enumerate(self.chapter_list):
             if data['chapter_id'] + '.txt' in os.listdir(Vars.config_text) or data['auth_access'] == '0':
                 continue
