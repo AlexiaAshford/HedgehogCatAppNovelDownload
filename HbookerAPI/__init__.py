@@ -1,5 +1,4 @@
-from HbookerAPI import HttpUtil, CryptoUtil, UrlConstants
-import json
+from HbookerAPI import HttpUtil, UrlConstants
 
 common_params = {'account': None, 'login_token': None, 'app_version': '4.7.94'}
 
@@ -14,7 +13,7 @@ def get(api_url, params=None, **kwargs):
     if params is not None:
         params.update(common_params)
     api_url = api_url.replace(UrlConstants.WEB_SITE, '')
-    return json.loads(CryptoUtil.decrypt(HttpUtil.get(UrlConstants.WEB_SITE + api_url, params=params, **kwargs)))
+    return HttpUtil.get(UrlConstants.WEB_SITE + api_url, params=params, **kwargs)
 
 
 def post(api_url, data=None, **kwargs):
@@ -23,7 +22,7 @@ def post(api_url, data=None, **kwargs):
     if data is not None:
         data.update(common_params)
     api_url = api_url.replace(UrlConstants.WEB_SITE, '')
-    return json.loads(CryptoUtil.decrypt(HttpUtil.post(UrlConstants.WEB_SITE + api_url, data=data, **kwargs)))
+    return HttpUtil.post(UrlConstants.WEB_SITE + api_url, data=data, **kwargs)
 
 
 class SignUp:
