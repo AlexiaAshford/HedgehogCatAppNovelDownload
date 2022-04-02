@@ -84,7 +84,7 @@ class Book:
             with open(Vars.config_text + "/" + chapter_id + ".txt", 'w', encoding='utf-8') as _file:
                 _file.write("第"+response2['data']['chapter_info']['chapter_index']+"章: ")
                 _file.write(response2['data']['chapter_info']['chapter_title'].replace("#G9uf", "") + "\n")
-                _file.write(HbookerAPI.CryptoUtil.decrypt(txt_content, command).decode('utf-8'))
+                _file.write(HbookerAPI.HttpUtil.decrypt(txt_content, command).decode('utf-8'))
 
             self.show_progress(self.current_progress, division_chapter_length)
             self.pool_sema.release()

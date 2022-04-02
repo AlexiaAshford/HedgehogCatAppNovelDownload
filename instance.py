@@ -41,7 +41,7 @@ class Config:
 
 class Vars:
     cfg = Config(os.getcwd() + '/config.json', os.getcwd())
-    current_bookshelf = None
+    current_bookshelf = []
     current_book = None
     out_text_file = None
     config_text = None
