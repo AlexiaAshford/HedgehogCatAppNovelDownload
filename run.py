@@ -6,7 +6,7 @@ import re
 
 def shell_bookshelf():
     response = HbookerAPI.BookShelf.get_shelf_list()
-    if response.get('code') != '100000' and response.get('tip') is None:
+    if response.get('code') != '100000':
         print("code:", response.get('code'), "Msg:", response.get("tip"))
         return False
     for shelf in response['data']['shelf_list']:
@@ -43,8 +43,7 @@ def shell_login(inputs):
         response = HbookerAPI.SignUp.login(Vars.cfg.data.get('account_info'))
         if response.get('code') == '100000':
             Vars.cfg.data['common_params'] = {
-                'login_token': response['data']['login_token'],
-                'account': response['data']['reader_info']['account']
+                'login_token': response['data']['login_token'], 'account': response['data']['reader_info']['account']
             }
             HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
             Vars.cfg.save()
