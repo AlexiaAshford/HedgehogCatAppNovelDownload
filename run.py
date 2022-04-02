@@ -62,8 +62,6 @@ def shell_download_book(inputs):
         if Vars.current_book is not None:
             Vars.current_book = book.Book(book_info=Vars.current_book.get('book_info'))
             print('开始下载书籍《' + Vars.current_book.book_name + '》')
-            Vars.current_epub = Epub.EpubFile()
-            Vars.current_epub.add_intro()
             Vars.current_book.get_division_list(), Vars.current_book.get_chapter_catalog()
             if len(Vars.current_book.chapter_list) != 0:
                 Vars.out_text_file = Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt'

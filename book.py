@@ -1,4 +1,6 @@
 import threading
+
+import Epub
 import HbookerAPI
 from instance import *
 
@@ -27,6 +29,8 @@ class Book:
                 print('[提示]第{}卷'.format(division['division_index']), '分卷名:', division['division_name'])
 
     def get_chapter_catalog(self, max_retry=10):
+        Vars.current_epub = Epub.EpubFile()
+        Vars.current_epub.add_intro()
         self.chapter_list.clear()
         for division in self.division_list:
             for retry in range(max_retry):
@@ -63,10 +67,11 @@ class Book:
         self.export_txt()
 
     def export_txt(self):
-        for file_name in os.listdir(Vars.config_text):
+        for index, file_name in enumerate(os.listdir(Vars.config_text)):
             file_info = write(Vars.config_text + "/" + file_name, 'r')
             with open(Vars.out_text_file, "a", encoding='utf-8') as _file:
                 _file.write("\n\n" + file_info)
+            Vars.current_epub.add_chapter("第"+index+"章", file_info, index)
         Vars.current_epub.save()
         print('[提示] 《' + self.book_name + '》下载完成,已导出文件')
 
@@ -86,11 +91,11 @@ class Book:
                 _file.write("第"+response2['data']['chapter_info']['chapter_index']+"章: ")
                 _file.write(response2['data']['chapter_info']['chapter_title'].replace("#G9uf", "") + "\n")
                 _file.write(HbookerAPI.HttpUtil.decrypt(txt_content, command).decode('utf-8'))
-            Vars.current_epub.add_chapter(
-                response2['data']['chapter_info']['chapter_title'].replace("#G9uf", ""),
-                HbookerAPI.HttpUtil.decrypt(txt_content, command).decode('utf-8'),
-                response2['data']['chapter_info']['chapter_index']
-            )
+            # Vars.current_epub.add_chapter(
+            #     response2['data']['chapter_info']['chapter_title'].replace("#G9uf", ""),
+            #     HbookerAPI.HttpUtil.decrypt(txt_content, command).decode('utf-8'),
+            #     response2['data']['chapter_info']['chapter_index']
+            # )
             self.show_progress(self.current_progress, division_chapter_length)
             self.pool_sema.release()
         else:
