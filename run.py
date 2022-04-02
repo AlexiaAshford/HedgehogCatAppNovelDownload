@@ -5,32 +5,36 @@ import re
 
 
 def shell_bookshelf():
-    Vars.current_bookshelf.clear()
     response = HbookerAPI.BookShelf.get_shelf_list()
     if response.get('code') != '100000' and response.get('tip') is None:
         print("code:", response.get('code'), "Msg:", response.get("tip"))
         return False
     for shelf in response['data']['shelf_list']:
         print('书架编号:', shelf['shelf_index'], ', 书架名:', shelf['shelf_name'])
+
     if len(response['data']['shelf_list']) > 1:
-        input_shelf_id = get("输入书架编号:").strip()
-        shelf_list = response['data']['shelf_list'][int(input_shelf_id) - 1]
+        shelf_list = response['data']['shelf_list'][int(get("输入书架编号:").strip()) - 1]
     else:
         shelf_list = response['data']['shelf_list'][0]
         print('检测到账号只有一个书架，已自动选择，书架名:', shelf_list['shelf_name'])
 
-    for index, data in enumerate(HbookerAPI.BookShelf.shelf_list(shelf_list['shelf_id'])['data']['book_list']):
-        Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index + 1)))
+    book_list = HbookerAPI.BookShelf.shelf_list(shelf_list['shelf_id'])
+    if book_list.get('code') == '100000':
+        for index, data in enumerate(book_list['data']['book_list']):
+            Vars.current_bookshelf.append(Book(book_info=data['book_info'], index=str(index + 1)))
 
-    for book in Vars.current_bookshelf:
-        print("\nindex:", book.index)
-        print('name:', book.book_name, " author:", book.author_name, " id:", book.book_id)
-        print("time:", book.last_chapter_info['uptime'], " chapter:", book.last_chapter_info['chapter_title'])
+        for book in Vars.current_bookshelf:
+            print("\nindex:", book.index)
+            print('name:', book.book_name, " author:", book.author_name, " id:", book.book_id)
+            print("time:", book.last_chapter_info['uptime'], " chapter:", book.last_chapter_info['chapter_title'])
 
-    input_shelf_book_index = get("输入书籍编号:").strip()
-    for book in Vars.current_bookshelf:
-        if book.index == input_shelf_book_index:
-            shell_download_book(["", book.book_id])
+        input_shelf_book_index = get("输入书籍编号:").strip()
+        for book in Vars.current_bookshelf:
+            if book.index == input_shelf_book_index:
+                shell_download_book(["", book.book_id])
+        Vars.current_bookshelf.clear()
+    else:
+        print("code:", book_list.get('code'), "Msg:", book_list.get("tip"))
 
 
 def shell_login(inputs):
@@ -71,25 +75,15 @@ def shell_download_book(inputs):
         else:
             print('获取书籍信息失败, book_id:', inputs[1])
     else:
-        print('未输入book_id:')
+        print('未输入book_id')
 
 
 def shell_update():
     if len(Vars.cfg.data.get('downloaded_book_id_list')) == 0:
         print('书单暂无可更新书籍，请检查config.json downloaded_book_id_list')
     else:
-        for book_id in Vars.cfg.data['downloaded_book_id_list']:
-            Vars.current_book = HbookerAPI.Book.get_info_by_id(book_id).get('data')
-            if Vars.current_book is not None:
-                Vars.current_book = Book(None, Vars.current_book['book_info'])
-                Vars.current_book.get_division_list()
-                Vars.current_book.get_chapter_catalog()
-                if len(Vars.current_book.chapter_list) != 0:
-                    Vars.out_text_file = Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt'
-                    Vars.config_text = Vars.cfg.data['save_path'] + Vars.current_book.book_name
-                    Vars.current_book.download_chapter()
-            else:
-                print('[提示]获取书籍信息失败, book_id:', book_id)
+        for index, book_id in enumerate(Vars.cfg.data['downloaded_book_id_list']):
+            shell_download_book([index, book_id])
     print('[提示]书籍更新已完成')
 
 
