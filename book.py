@@ -17,7 +17,7 @@ class Book:
         self.author_name = book_info['author_name']
         self.cover = book_info['cover'].replace(' ', '')
         self.last_chapter_info = book_info['last_chapter_info']
-        self.pool_sema = threading.BoundedSemaphore(32)
+        self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data['max_thread'])
 
     def get_division_list(self):
         response = HbookerAPI.Book.get_division_list(self.book_id)
