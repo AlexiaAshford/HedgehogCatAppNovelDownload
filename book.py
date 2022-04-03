@@ -73,8 +73,8 @@ class Book:
                     progress.result()
 
     def download_chapter(self):
-        makedir_config(file_path="",  dir_path=Vars.config_text), self.threading_key(), self.threading_list.clear()
-        makedir_config(file_path=Vars.out_text_file, dir_path=Vars.cfg.data['out_path'])
+        self.threading_key(), self.threading_list.clear()
+
         length = len(self.threading_chapter_id_list)
         for chapter_id, command_key in self.threading_chapter_id_list:
             thread = threading.Thread(target=self.download_threading, args=(chapter_id, command_key, length,))

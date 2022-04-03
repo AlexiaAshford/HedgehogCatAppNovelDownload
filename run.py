@@ -1,4 +1,6 @@
 import sys
+import time
+
 import book
 from instance import *
 import HbookerAPI
@@ -57,6 +59,7 @@ def shell_login(inputs):
 
 def shell_download_book(inputs):
     if len(inputs) >= 2:
+        start_time = time.time()
         Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1]).get('data')
         if Vars.current_book is not None:
             Vars.current_book = book.Book(book_info=Vars.current_book.get('book_info'))
@@ -65,12 +68,15 @@ def shell_download_book(inputs):
             if len(Vars.current_book.chapter_list) != 0:
                 Vars.out_text_file = Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt'
                 Vars.config_text = Vars.cfg.data['save_path'] + Vars.current_book.book_name
+                makedir_config(file_path="", dir_path=Vars.config_text)
+                makedir_config(file_path=Vars.out_text_file, dir_path=Vars.cfg.data['out_path'])
                 Vars.current_book.download_chapter()
             else:
                 print(Vars.current_book.book_name, "没有需要下载的章节！")
             if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
                 Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
                 Vars.cfg.save()
+            print("耗时: {:.2f}秒".format(time.time() - start_time))
         else:
             print('获取书籍信息失败, book_id:', inputs[1])
     else:
