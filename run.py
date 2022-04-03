@@ -2,7 +2,6 @@ import sys
 import book
 from instance import *
 import HbookerAPI
-import Epub
 import re
 
 
@@ -45,9 +44,9 @@ def shell_login(inputs):
         response = HbookerAPI.SignUp.login(Vars.cfg.data.get('account_info'))
         if response.get('code') == '100000':
             Vars.cfg.data['common_params'] = {
-                'login_token': response['data']['login_token'], 'account': response['data']['reader_info']['account']
+                'account': response['data']['reader_info']['account'],
+                'login_token': response['data']['login_token'], 'app_version': '2.9.022'
             }
-            HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
             Vars.cfg.save()
             print('登录成功, 当前用户昵称为:', HbookerAPI.SignUp.user_account())
         else:
@@ -89,8 +88,6 @@ def shell_update():
 
 def update_config():
     Vars.cfg.load()
-    if Vars.cfg.data.get('common_params') is None:
-        Vars.cfg.data['common_params'] = {'login_token': "", 'account': ""}
     if Vars.cfg.data.get('downloaded_book_id_list') is None:
         Vars.cfg.data['downloaded_book_id_list'] = []
     if not isinstance(Vars.cfg.data.get('max_thread'), int):
@@ -99,8 +96,9 @@ def update_config():
         Vars.cfg.data['save_path'] = "./Hbooker/"
     if not isinstance(Vars.cfg.data.get('out_path'), str):
         Vars.cfg.data['out_path'] = "./downloads/"
+    if not isinstance(Vars.cfg.data.get('common_params'), dict):
+        Vars.cfg.data['common_params'] = {'login_token': "", 'account': "", 'app_version': '2.9.022'}
     Vars.cfg.save()
-    HbookerAPI.set_common_params(Vars.cfg.data.get('common_params'))
 
 
 def tests_account_login():
@@ -112,10 +110,9 @@ def tests_account_login():
             response = HbookerAPI.SignUp.login(Vars.cfg.data['account_info'])
             if response.get('code') == '100000':
                 Vars.cfg.data['common_params'] = {
-                    'login_token': response['data']['login_token'],
-                    'account': response['data']['reader_info']['account']
+                    'account': response['data']['reader_info']['account'],
+                    'login_token': response['data']['login_token'], 'app_version': '2.9.022'
                 }
-                HbookerAPI.set_common_params(Vars.cfg.data['common_params'])
                 Vars.cfg.save()
                 print("账号:", HbookerAPI.SignUp.user_account(), "自动登入成功！")
             else:
@@ -125,21 +122,22 @@ def tests_account_login():
 
 
 def shell(inputs):
-    if inputs[0] == 'q' or inputs[0] == 'quit':
-        exit()
-    elif inputs[0] == 'l' or inputs[0] == 'login':
+    choice = inputs[0].lower()
+    if choice == 'q' or choice == 'quit':
+        sys.exit(3)
+    elif choice == 'l' or choice == 'login':
         shell_login(inputs)
-    elif inputs[0] == 'd' or inputs[0] == 'download':
+    elif choice == 'd' or choice == 'download':
         shell_download_book(inputs)
-    elif inputs[0] == 'bs' or inputs[0] == 'bookshelf':
+    elif choice == 'bs' or choice == 'bookshelf':
         shell_bookshelf()
-    elif inputs[0] == 'up' or inputs[0] == 'updata':
+    elif choice == 'up' or choice == 'updata':
         shell_update()
 
 
 if __name__ == '__main__':
     update_config()
-    # tests_account_login()
+    tests_account_login()
     if len(sys.argv) >= 2:
         shell(sys.argv[1:])
     else:

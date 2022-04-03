@@ -1,5 +1,7 @@
 import threading
-
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
+from rich.progress import track
 import Epub
 import HbookerAPI
 from instance import *
@@ -29,18 +31,16 @@ class Book:
             for division in self.division_list:
                 print('[提示]第{}卷'.format(division['division_index']), '分卷名:', division['division_name'])
 
-    def get_chapter_catalog(self, max_retry=10):
+    def get_chapter_catalog(self):
         Vars.current_epub = Epub.EpubFile()
-        Vars.current_epub.add_intro()
-        self.chapter_list.clear()
+        Vars.current_epub.add_intro(), self.chapter_list.clear()
         for division in self.division_list:
-            for retry in range(max_retry):
-                response = HbookerAPI.Book.get_chapter_update(division['division_id'])
-                if response.get('code') == '100000':
-                    self.chapter_list.extend(response['data']['chapter_list'])
-                    break
-                else:
-                    print("code:", response.get('code'), "error:", response.get("tip"))
+            response = HbookerAPI.Book.get_chapter_update(division['division_id'])
+            if response.get('code') == '100000':
+                self.chapter_list.extend(response['data']['chapter_list'])
+                print(division['division_name'], "加载完毕...")
+            else:
+                print("code:", response.get('code'), "error:", response.get("tip"))
 
         self.chapter_list.sort(key=lambda x: int(x['chapter_index']))
         self.show_chapter_latest()
@@ -48,41 +48,38 @@ class Book:
     def show_chapter_latest(self):
         shield_chapter_length = len([i for i in self.chapter_list if i['chapter_title'] == '该章节未审核通过'])
         if shield_chapter_length != 0:
-            print("[提示]本书一共有", shield_chapter_length, "章被屏蔽")
-        print('[提示]最新章节:', self.chapter_list[-1]['chapter_title'], "\t更新时间:", self.chapter_list[-1]['mtime'])
+            print("\n[提示]本书一共有", shield_chapter_length, "章被屏蔽")
+        print('\n[提示]最新章节:', self.chapter_list[-1]['chapter_title'], "\t更新时间:", self.chapter_list[-1]['mtime'])
 
-    def continue_chapter(self, chapter_id, auth_access, length):
-        self.show_progress(length)
-        if chapter_id + '.txt' in os.listdir(Vars.config_text) or auth_access == '0':
+    def continue_chapter(self, chapter_id, auth_access):
+        if chapter_id + '.txt' in os.listdir(Vars.config_text):
             return False
+        if auth_access == '0':
+            return False
+            
+        response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
+        if response.get('code') == '100000':
+            self.threading_chapter_id_list.append([chapter_id, response['data']['command']])
         else:
-            response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
-            if response.get('code') == '100000':
-                self.threading_chapter_id_list.append([chapter_id, response['data']['command']])
-            else:
-                print("Msg:", response.get('tip'))
+            print("Msg:", response.get('tip'))
 
     def threading_key(self):
-        length = len(self.chapter_list)
-        for index, data in enumerate(self.chapter_list):
-            thread_ = threading.Thread(target=self.continue_chapter,
-                                       args=(data['chapter_id'], data['auth_access'], length))
-            self.threading_list.append(thread_)
-
-        for _ in self.threading_list:
-            _.start()
-
-        for _ in self.threading_list:
-            _.join()
-        self.current_progress = 0
-        self.threading_list.clear()
+        print("length", len(self.chapter_list))
+        pool_progress = []
+        with ThreadPoolExecutor(max_workers=32) as executor:
+            for index, data in enumerate(self.chapter_list):
+                task = partial(self.continue_chapter, data['chapter_id'], data['auth_access'])
+                pool_progress.append(executor.submit(task))
+            if pool_progress:
+                for progress in track(pool_progress, description="正在加载目录..."):
+                    progress.result()
 
     def download_chapter(self):
         Config("", Vars.config_text), Config(Vars.out_text_file, Vars.cfg.data['out_path'])
         self.threading_key()
+        length = len(self.threading_chapter_id_list)
         for chapter_id, command_key in self.threading_chapter_id_list:
-            thread = threading.Thread(target=self.download_threading,
-                                      args=(chapter_id, command_key, len(self.chapter_list),))
+            thread = threading.Thread(target=self.download_threading, args=(chapter_id, command_key, length,))
             self.threading_list.append(thread)
 
         for thread in self.threading_list:
