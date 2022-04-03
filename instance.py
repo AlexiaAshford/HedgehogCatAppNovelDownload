@@ -65,6 +65,13 @@ def write(file_path, mode='', data=''):
         _file.write(data)
 
 
+def makedir_config(file_path, dir_path):
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path)
+    if '.txt' in file_path:
+        open(file_path, 'w').close()
+
+
 def get(prompt, default=None):
     while True:
         ret = input(prompt)

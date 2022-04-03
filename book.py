@@ -64,19 +64,17 @@ class Book:
             print("Msg:", response.get('tip'))
 
     def threading_key(self):
-        print("length", len(self.chapter_list))
-        pool_progress = []
-        with ThreadPoolExecutor(max_workers=32) as executor:
+        with ThreadPoolExecutor(max_workers=Vars.cfg.data['max_thread']) as executor:
             for index, data in enumerate(self.chapter_list):
                 task = partial(self.continue_chapter, data['chapter_id'], data['auth_access'])
-                pool_progress.append(executor.submit(task))
-            if pool_progress:
-                for progress in track(pool_progress, description="正在加载目录..."):
+                self.threading_list.append(executor.submit(task))
+            if self.threading_list:
+                for progress in track(self.threading_list, description="正在加载目录..."):
                     progress.result()
 
     def download_chapter(self):
-        Config("", Vars.config_text), Config(Vars.out_text_file, Vars.cfg.data['out_path'])
-        self.threading_key()
+        makedir_config(file_path="",  dir_path=Vars.config_text), self.threading_key(), self.threading_list.clear()
+        makedir_config(file_path=Vars.out_text_file, dir_path=Vars.cfg.data['out_path'])
         length = len(self.threading_chapter_id_list)
         for chapter_id, command_key in self.threading_chapter_id_list:
             thread = threading.Thread(target=self.download_threading, args=(chapter_id, command_key, length,))
@@ -112,7 +110,7 @@ class Book:
             txt_content = response2['data']['chapter_info']['txt_content']
             with open(Vars.config_text + "/" + chapter_id + ".txt", 'w', encoding='utf-8') as _file:
                 _file.write("第" + response2['data']['chapter_info']['chapter_index'] + "章: ")
-                _file.write(response2['data']['chapter_info']['chapter_title'].replace("#G9uf", "") + "\n")
+                _file.write(response2['data']['chapter_info']['chapter_title'] + "\n")
                 _file.write(HbookerAPI.HttpUtil.decrypt(txt_content, command_key).decode('utf-8'))
             self.show_progress(division_chapter_length)
             self.pool_sema.release()
