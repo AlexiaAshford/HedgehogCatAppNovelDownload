@@ -1,10 +1,10 @@
-import threading
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
-from rich.progress import track
 import Epub
+import threading
 import HbookerAPI
 from instance import *
+from functools import partial
+from rich.progress import track
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Book:
@@ -28,8 +28,6 @@ class Book:
         response = HbookerAPI.Book.get_division_list(self.book_id)
         if response.get('code') == '100000':
             self.division_list = response['data']['division_list']
-            for division in self.division_list:
-                print('[提示]第{}卷'.format(division['division_index']), '分卷名:', division['division_name'])
 
     def get_chapter_catalog(self):
         Vars.current_epub = Epub.EpubFile()
@@ -38,7 +36,7 @@ class Book:
             response = HbookerAPI.Book.get_chapter_update(division['division_id'])
             if response.get('code') == '100000':
                 self.chapter_list.extend(response['data']['chapter_list'])
-                print(division['division_name'], "加载完毕...")
+                print('第{}卷'.format(division['division_index']), '分卷名:', division['division_name'], "加载完毕...")
             else:
                 print("code:", response.get('code'), "error:", response.get("tip"))
 
@@ -56,7 +54,7 @@ class Book:
             return False
         if auth_access == '0':
             return False
-            
+
         response = HbookerAPI.Chapter.get_chapter_command(chapter_id)
         if response.get('code') == '100000':
             self.threading_chapter_id_list.append([chapter_id, response['data']['command']])
