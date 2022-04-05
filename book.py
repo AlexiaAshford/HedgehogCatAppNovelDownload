@@ -25,23 +25,25 @@ class Book:
         self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data['max_thread'])
 
     def get_division_list(self):
+        Vars.current_epub = Epub.EpubFile()
+        Vars.current_epub.add_intro(), self.chapter_list.clear()
         response = HbookerAPI.Book.get_division_list(self.book_id)
         if response.get('code') == '100000':
             self.division_list = response['data']['division_list']
-
-    def get_chapter_catalog(self):
-        Vars.current_epub = Epub.EpubFile()
-        Vars.current_epub.add_intro(), self.chapter_list.clear()
         for division in self.division_list:
-            response = HbookerAPI.Book.get_chapter_update(division['division_id'])
-            if response.get('code') == '100000':
-                self.chapter_list.extend(response['data']['chapter_list'])
-                print('第{}卷'.format(division['division_index']), '分卷名:', division['division_name'], "加载完毕...")
-            else:
-                print("code:", response.get('code'), "error:", response.get("tip"))
-
+            print('第{}卷:'.format(division['division_index']), division['division_name'])
+        with ThreadPoolExecutor(max_workers=16) as executor:
+            for division in self.division_list:
+                executor.submit(self.get_chapter_catalog, division)
         self.chapter_list.sort(key=lambda x: int(x['chapter_index']))
         self.show_chapter_latest()
+
+    def get_chapter_catalog(self, division):
+        response = HbookerAPI.Book.get_chapter_update(division['division_id'])
+        if response.get('code') == '100000':
+            self.chapter_list.extend(response['data']['chapter_list'])
+        else:
+            print("code:", response.get('code'), "error:", response.get("tip"))
 
     def show_chapter_latest(self):
         shield_chapter_length = len([i for i in self.chapter_list if i['chapter_title'] == '该章节未审核通过'])
