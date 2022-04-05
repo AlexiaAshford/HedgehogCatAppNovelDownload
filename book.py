@@ -63,18 +63,19 @@ class Book:
         else:
             print("Msg:", response.get('tip'))
 
-    def threading_key(self):
+    def threading_get_chapter_key(self):
         with ThreadPoolExecutor(max_workers=Vars.cfg.data['max_thread']) as executor:
             for index, data in enumerate(self.chapter_list):
-                task = partial(self.continue_chapter, data['chapter_id'], data['auth_access'])
-                self.threading_list.append(executor.submit(task))
+                self.threading_list.append(
+                    executor.submit(partial(self.continue_chapter, data['chapter_id'], data['auth_access']))
+                )
             if self.threading_list:
                 for progress in track(self.threading_list, description="正在加载目录..."):
                     progress.result()
+        self.threading_list.clear()
 
     def download_chapter(self):
-        self.threading_key(), self.threading_list.clear()
-
+        self.threading_get_chapter_key()
         length = len(self.threading_chapter_id_list)
         for chapter_id, command_key in self.threading_chapter_id_list:
             thread = threading.Thread(target=self.download_threading, args=(chapter_id, command_key, length,))
