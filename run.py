@@ -60,7 +60,7 @@ def shell_login(inputs):
 def shell_download_book(inputs):
     if len(inputs) >= 2:
         start_time = time.time()
-        Vars.current_book = HbookerAPI.Book.get_info_by_id(inputs[1]).get('data')
+        Vars.current_book = HbookerAPI.Book.get_info_by_id(get_id(inputs[1])).get('data')
         if Vars.current_book is not None:
             Vars.current_book = book.Book(book_info=Vars.current_book.get('book_info'))
             print('开始下载书籍《' + Vars.current_book.book_name + '》')

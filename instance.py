@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 
 class Config:
@@ -56,6 +57,13 @@ class Vars:
         'download \t\t\t <书籍编号/书籍ID> \t 下载到最后章节为止',
         'update \t\t\t\t 更新已下载的所有书籍并复制到updates文件夹'
     ]
+
+
+def get_id(url: str) -> str:
+    result = re.compile(r'(\d+)').findall(url)
+    if len(result) > 0 and result[0].isdigit() and len(result[0]) == 9:
+        return result[0]
+    print(f'[错误]无法从{url}搜索到书籍ID')
 
 
 def write(file_path, mode='', data=''):
