@@ -1,4 +1,5 @@
-
+HAPPY = "https://app.happybooker.cn/"
+HBOOKER = "https://app.hbooker.com/"
 ABOUT_URL = "https://app.hbooker.com/setting/view_about"
 ADD_BBS_COMMENT = "bbs/add_bbs_comment"
 ADD_BBS_COMMENT_REPLY = "bbs/add_bbs_comment_reply"
@@ -191,4 +192,3 @@ SYS_MSG = "reader/get_message_sys_list"
 THIRD_SWITCH = "setting/thired_party_switch"
 UNBIND_THIRD = "reader/oauth_unbind"
 URL_ORDER = "recharge/ipay_order"
-WEB_SITE = "https://app.hbooker.com/"

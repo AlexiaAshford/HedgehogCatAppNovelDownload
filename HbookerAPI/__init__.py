@@ -2,13 +2,34 @@ from HbookerAPI import HttpUtil, UrlConstants
 from instance import *
 
 
+def compared_version(ver1, ver2="2.9.281"):
+    list1, list2 = (str(ver1).split("."), str(ver2).split("."))  # 循环次数为短的列表的len
+    for i in range(len(list1)) if len(list1) < len(list2) else range(len(list2)):
+        if int(list1[i]) == int(list2[i]):
+            pass
+        elif int(list1[i]) < int(list2[i]):
+            return True
+        else:
+            return False
+    # 循环结束，哪个列表长哪个版本号高
+    if len(list1) == len(list2):
+        return False
+    elif len(list1) < len(list2):
+        return True
+    else:
+        return False
+
+
 def get(api_url: str, params: dict = None, **kwargs):
     if params is None:
         params = Vars.cfg.data['common_params']
     if params is not None:
         params.update(Vars.cfg.data['common_params'])
-    api_url = UrlConstants.WEB_SITE + api_url.replace(UrlConstants.WEB_SITE, '')
-    return HttpUtil.get(api_url, params=params, **kwargs)
+    if compared_version(Vars.cfg.data.get("common_params").get('app_version')):
+        api_url, headers = (UrlConstants.HBOOKER + api_url.replace(UrlConstants.HBOOKER, ''), {'User-Agent': 'Android'})
+    else:
+        api_url, headers = (UrlConstants.HAPPY + api_url.replace(UrlConstants.HAPPY, ''), {'User-Agent': 'Android'})
+    return HttpUtil.get(api_url, params=params, headers=headers, **kwargs)
 
 
 def post(api_url: str, data: dict = None, **kwargs):
@@ -16,8 +37,11 @@ def post(api_url: str, data: dict = None, **kwargs):
         data = Vars.cfg.data['common_params']
     if data is not None:
         data.update(Vars.cfg.data['common_params'])
-    api_url = UrlConstants.WEB_SITE + api_url.replace(UrlConstants.WEB_SITE, '')
-    return HttpUtil.post(api_url, data=data, **kwargs)
+    if compared_version(Vars.cfg.data.get("common_params").get('app_version')):
+        api_url, headers = (UrlConstants.HBOOKER + api_url.replace(UrlConstants.HBOOKER, ''), {'User-Agent': 'Android'})
+    else:
+        api_url, headers = (UrlConstants.HAPPY + api_url.replace(UrlConstants.HAPPY, ''), {'User-Agent': 'Android'})
+    return HttpUtil.post(api_url, data=data, headers=headers, **kwargs)
 
 
 class SignUp:

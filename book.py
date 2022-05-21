@@ -32,7 +32,7 @@ class Book:
             self.division_list = response['data']['division_list']
         for division in self.division_list:
             print('第{}卷:'.format(division['division_index']), division['division_name'])
-        with ThreadPoolExecutor(max_workers=16) as executor:
+        with ThreadPoolExecutor(max_workers=len(self.division_list)) as executor:
             for division in self.division_list:
                 executor.submit(self.get_chapter_catalog, division)
         self.chapter_list.sort(key=lambda x: int(x['chapter_index']))
