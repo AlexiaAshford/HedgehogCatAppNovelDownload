@@ -1,10 +1,11 @@
 import sys
 import time
-
+from rich import print
 import book
 from instance import *
 import HbookerAPI
 import re
+import argparse
 
 
 def shell_bookshelf():
@@ -52,6 +53,7 @@ def shell_login(inputs):
             Vars.cfg.save()
             print('登录成功, 当前用户昵称为:', HbookerAPI.SignUp.user_account())
         else:
+            # print(response)
             print(response.get('tip'))
     else:
         print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
@@ -141,15 +143,66 @@ def shell(inputs):
         shell_update()
 
 
-if __name__ == '__main__':
-    update_config()
-    tests_account_login()
-    if len(sys.argv) >= 2:
-        shell(sys.argv[1:])
-    else:
+def shell_parser():
+    parser, shell_console = argparse.ArgumentParser(), False
+    # 注意在使用参数时，是用的参数的dest名字，而不是参数的名字
+    parser.add_argument("-l", "--login", dest="login", nargs='+', default=None, help="登录账号")
+    parser.add_argument("-d", "--download", dest="downloadbook", nargs=1, default=None, help="输入book-id")
+    parser.add_argument("-m", "--max", dest="threading_max", default=None, help="更改线程")
+    parser.add_argument("-up", "--update", dest="update", default=False, action="store_true", help="更新小说")
+    parser.add_argument("-bi", "--bookinfo", dest="bookinfo", nargs=1, default=None, help="输入book-id")
+    parser.add_argument("-sh", "--shell_help", dest="shell_help", default=False, action="store_true", help="说明")
+    parser.add_argument("-bs", "--bookshelf", dest="bookshelf", default=False, action="store_true", help="下载书架小说")
+    parser.add_argument("-clear", "--clear_cache", dest="clear_cache", default=False, action="store_true")
+    # parser.add_argument("-s", "--shell", dest="shell", default=False, action="store_true", help="显示操作终端")
+    args = parser.parse_args()
+    if args.bookshelf:
+        shell_bookshelf()
+        shell_console = True
+
+    if args.update:
+        shell_update()
+        shell_console = True
+
+    if args.clear_cache:
+        Vars.cfg.data.clear()
+        Vars.cfg.save()
+        sys.exit(3)
+
+    if args.threading_max:
+        Vars.cfg.data['max_thread'] = int(args.max)
+
+    if args.downloadbook:
+        shell_download_book(['d'] + args.downloadbook)
+        shell_console = True
+
+    if args.bookinfo:
+        Vars.current_book = HbookerAPI.Book.get_info_by_id(get_id(args.bookinfo[0])).get('data')
+        if Vars.current_book is not None:
+            Vars.current_book = book.Book(book_info=Vars.current_book.get('book_info'))
+            Vars.current_book.book_information()
+        shell_console = True
+
+    if args.login is not None:
+        shell_login(['login'] + args.login)
+        shell_console = True
+
+    if args.shell_help or not shell_console:
         for info in Vars.help_info:
             print('[帮助]', info)
-        inputs_list = re.split('\\s+', get('>').strip())
+        if args.shell_help:
+            shell_console = True
+
+    if not shell_console:
         while True:
-            shell(inputs_list)
-            inputs_list = re.split('\\s+', get('>').strip())
+            shell(re.split('\\s+', get('>').strip()))
+
+
+if __name__ == '__main__':
+    update_config()
+    # print(HbookerAPI.Book.get_updated_chapter_by_division_new('100297094'))
+    try:
+        tests_account_login()
+        shell_parser()
+    except KeyboardInterrupt:
+        print('\n[提示]程序已退出')

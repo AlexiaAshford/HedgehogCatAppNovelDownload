@@ -24,6 +24,13 @@ class Book:
         self.last_chapter = book_info['last_chapter_info']
         self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data['max_thread'])
 
+    def book_information(self):
+        print('\n[提示] 《' + self.book_name + '》')
+        print('[提示] 作者:', self.author_name)
+        print('[提示] 最新章节:', self.last_chapter['chapter_title'])
+        print('[提示] 最新更新时间:', self.last_chapter['mtime'])
+
+
     def get_division_list(self):
         Vars.current_epub = Epub.EpubFile()
         Vars.current_epub.add_intro(), self.chapter_list.clear()

@@ -18,10 +18,20 @@ l  | account/password           --- 登入刺猬猫账号
 d  | bookid                     --- 输入book id下载小说
 u  | updata                     --- 更新下载过的小说
 bs | bookshelfid                --- 显示书架信息, 可选书架
+
+
 ```
-- **登入账号** ```python run.py l account password```
-- **下载书籍** ```python run.py d bookid```
+## 命令行交互
+- **登入账号** ```python run.py --login account password```
+- **下载书籍** ```python run.py --download bookid```
+- **更新书籍** ```python run.py --update ```
+- **显示书架** ```python run.py --bookshelf ```
+- **显示书籍** ```python run.py --bookinfo bookid```
+- **使用说明** ```python run.py --shell_help```
+- **清除缓存** ```python run.py --clear_cache```
+- 
 ## 需求环境
  * Python3.6以上
  * requests
+ * ebooklib
  * pycrypto或pycryptodome

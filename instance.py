@@ -52,9 +52,9 @@ class Vars:
         'quit \t\t\t\t 退出脚本',
         'login \t\t\t\t <用户名> <密码> \t 登录欢乐书客帐号',
         'help \t\t\t\t 用法与帮助',
-        'bookshelf \t\t\t 刷新并显示第一个书架列表',
-        'bookshelf \t\t\t <书架编号> \t 切换书架',
-        'download \t\t\t <书籍编号/书籍ID> \t 下载到最后章节为止',
+        'bookshelf \t\t\t\t 刷新并显示第一个书架列表',
+        'bookshelf \t\t\t\t <书架编号> \t 切换书架',
+        'download \t\t\t\t <书籍编号/书籍ID> \t 下载到最后章节为止',
         'update \t\t\t\t 更新已下载的所有书籍并复制到updates文件夹'
     ]
 
