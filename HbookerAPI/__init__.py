@@ -1,6 +1,8 @@
 from HbookerAPI import HttpUtil, UrlConstants
 from instance import *
 
+headers = {'User-Agent': 'Android Android com.kuangxiangciweimao.novel'}
+
 
 def compared_version(ver1, ver2="2.9.281"):
     list1, list2 = (str(ver1).split("."), str(ver2).split("."))  # 循环次数为短的列表的len
@@ -26,9 +28,9 @@ def get(api_url: str, params: dict = None, **kwargs):
     if params is not None:
         params.update(Vars.cfg.data['common_params'])
     if compared_version(Vars.cfg.data.get("common_params").get('app_version')):
-        api_url, headers = (UrlConstants.HBOOKER + api_url.replace(UrlConstants.HBOOKER, ''), {'User-Agent': 'Android'})
+        api_url = UrlConstants.HBOOKER + api_url.replace(UrlConstants.HBOOKER, '')
     else:
-        api_url, headers = (UrlConstants.HAPPY + api_url.replace(UrlConstants.HAPPY, ''), {'User-Agent': 'Android'})
+        api_url = UrlConstants.HAPPY + api_url.replace(UrlConstants.HAPPY, '')
     return HttpUtil.get(api_url, params=params, headers=headers, **kwargs)
 
 
@@ -38,10 +40,11 @@ def post(api_url: str, data: dict = None, **kwargs):
     if data is not None:
         data.update(Vars.cfg.data['common_params'])
     if compared_version(Vars.cfg.data.get("common_params").get('app_version')):
-        api_url, headers = (UrlConstants.HBOOKER + api_url.replace(UrlConstants.HBOOKER, ''), {'User-Agent': 'Android'})
+        api_url = UrlConstants.HBOOKER + api_url.replace(UrlConstants.HBOOKER, '')
     else:
-        api_url, headers = (UrlConstants.HAPPY + api_url.replace(UrlConstants.HAPPY, ''), {'User-Agent': 'Android'})
-    return HttpUtil.post(api_url, data=data, headers=headers, **kwargs)
+        api_url = UrlConstants.HAPPY + api_url.replace(UrlConstants.HAPPY, '')
+    # print(api_url, headers, data)
+    return HttpUtil.post(api_url, params=data, headers=headers, **kwargs)
 
 
 class SignUp:
@@ -51,7 +54,7 @@ class SignUp:
 
     @staticmethod
     def user_account():
-        response = post(UrlConstants.MY_DETAILS_INFO)
+        response = get(UrlConstants.MY_DETAILS_INFO)
         if response.get('code') == '100000':
             return response.get('data').get('reader_info').get('reader_name')
         else:

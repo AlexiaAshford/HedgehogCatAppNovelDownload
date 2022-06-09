@@ -8,55 +8,54 @@ import re
 import argparse
 
 
-def shell_bookshelf():
-    response = HbookerAPI.BookShelf.get_shelf_list()
+def shell_bookshelf():  # download bookshelf book
+    response = HbookerAPI.BookShelf.get_shelf_list()  # get bookshelf list
     if response.get('code') != '100000':
         print("code:", response.get('code'), "Msg:", response.get("tip"))
         return False
     for shelf in response['data']['shelf_list']:
-        print('书架编号:', shelf['shelf_index'], ', 书架名:', shelf['shelf_name'])
+        print('bookshelf index:', shelf['shelf_index'], ', bookshelf name:', shelf['shelf_name'])
 
     if len(response['data']['shelf_list']) > 1:
-        shelf_list = response['data']['shelf_list'][int(get("输入书架编号:").strip()) - 1]
+        shelf_list = response['data']['shelf_list'][int(get("please input book index:").strip()) - 1]
     else:
         shelf_list = response['data']['shelf_list'][0]
-        print('检测到账号只有一个书架，已自动选择，书架名:', shelf_list['shelf_name'])
+        print("this account only one bookshelf, auto bookshelf index:", shelf_list['shelf_name'])
 
     book_list = HbookerAPI.BookShelf.shelf_list(shelf_list['shelf_id'])
     if book_list.get('code') == '100000':
         for index, data in enumerate(book_list['data']['book_list']):
             Vars.current_bookshelf.append(book.Book(book_info=data['book_info'], index=str(index + 1)))
 
-        for book_info in Vars.current_bookshelf:
+        for book_info in Vars.current_bookshelf:  # print bookshelf book list
             print("\nindex:", book_info.index)
             print('name:', book_info.book_name, " author:", book_info.author_name, " id:", book_info.book_id)
             print("time:", book_info.last_chapter['uptime'], "chapter:", book_info.last_chapter['chapter_title'])
 
-        input_shelf_book_index = get("输入书籍编号:").strip()
+        input_shelf_book_index = get("please input book index:").strip()
         for book_info in Vars.current_bookshelf:
             if book_info.index == input_shelf_book_index:
                 shell_download_book(["", book_info.book_id])
-        Vars.current_bookshelf.clear()
+        Vars.current_bookshelf.clear()  # clear bookshelf list
     else:
         print("code:", book_list.get('code'), "Msg:", book_list.get("tip"))
 
 
-def shell_login(inputs):
-    if len(inputs) >= 3:
-        Vars.cfg.data['account_info'] = {'login_name': inputs[1], 'passwd': inputs[2]}
-        response = HbookerAPI.SignUp.login(Vars.cfg.data.get('account_info'))
-        if response.get('code') == '100000':
-            Vars.cfg.data['common_params'] = {
-                'account': response['data']['reader_info']['account'],
-                'login_token': response['data']['login_token'], 'app_version': '2.9.022'
-            }
-            Vars.cfg.save()
-            print('登录成功, 当前用户昵称为:', HbookerAPI.SignUp.user_account())
-        else:
-            # print(response)
-            print(response.get('tip'))
-    else:
-        print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
+# def shell_login(inputs): # invalid login
+#     if len(inputs) >= 3:
+#         Vars.cfg.data['account_info'] = {'login_name': inputs[1], 'passwd': inputs[2]}
+#         response = HbookerAPI.SignUp.login(Vars.cfg.data.get('account_info'))
+#         if response.get('code') == '100000':
+#             Vars.cfg.data['common_params'] = {
+#                 'account': response['data']['reader_info']['account'],
+#                 'login_token': response['data']['login_token'], 'app_version': '2.9.022'
+#             }
+#             Vars.cfg.save()
+#             print('登录成功, 当前用户昵称为:', HbookerAPI.SignUp.user_account())
+#         else:
+#             print(response.get('tip'))
+#     else:
+#         print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
 
 
 def shell_download_book(inputs):
@@ -105,28 +104,82 @@ def update_config():
     if not isinstance(Vars.cfg.data.get('out_path'), str):
         Vars.cfg.data['out_path'] = "./downloads/"
     if not isinstance(Vars.cfg.data.get('common_params'), dict):
-        Vars.cfg.data['common_params'] = {'login_token': "", 'account': "", 'app_version': '2.9.022'}
+        Vars.cfg.data['common_params'] = {
+            'login_token': "", 'account': "", 'app_version': '2.9.022', 'device_token': 'ciweimao_'}
     Vars.cfg.save()
 
 
-def tests_account_login():
-    if HbookerAPI.SignUp.user_account() is not None:
-        print("当前登入账号:", HbookerAPI.SignUp.user_account())
-    else:
-        if Vars.cfg.data.get('account_info') is not None:
-            print("检测到本地配置文件，尝试自动登入...")
-            response = HbookerAPI.SignUp.login(Vars.cfg.data['account_info'])
-            if response.get('code') == '100000':
-                Vars.cfg.data['common_params'] = {
-                    'account': response['data']['reader_info']['account'],
-                    'login_token': response['data']['login_token'], 'app_version': '2.9.022'
-                }
-                Vars.cfg.save()
-                print("账号:", HbookerAPI.SignUp.user_account(), "自动登入成功！")
-            else:
-                print("登入失败:", response.get('tip'))
+def new_tests_account_login():
+    if Vars.cfg.data['common_params']['login_token'] == "":
+        print("[warn]test login_token is empty, please input login_token in config.json")
+        print("[input]please input your login_token:")
+        account_token = get('>').strip()
+        if len(account_token) == 32:
+            Vars.cfg.data['common_params']['login_token'] = account_token
+            Vars.cfg.save()
+            print("[info]login_token is saved in config.json")
         else:
-            print("检测到本地配置文件账号信息为空，请手动登入！")
+            print('[warn]login_token is length error!\nplease input length 32 login_token:')
+            sys.exit(0)
+
+    if Vars.cfg.data['common_params']['account'] == "":
+        print("[warn]test account is empty, please input account in config.json")
+        print("[input]please input your account:")
+        account_name = get('>').strip()
+        if len(account_name) > 0 and "书客" in account_name:
+            Vars.cfg.data['common_params']['account'] = account_name
+            Vars.cfg.save()
+            print("[info]account is saved in config.json")
+        else:
+            print('[warn]account info is invalid!\nplease input again')
+            sys.exit(0)
+    if HbookerAPI.SignUp.user_account() is None:
+        print("[warn]hbooker api test account is invalid, test your config.json information")
+        new_tests_account_login()
+    else:
+        print('[info]the current account is:', HbookerAPI.SignUp.user_account())
+
+
+def new_shell_login(frequency=0):
+    if frequency == 0:
+        print("[input]please input your login_token:")
+        account_token = get('>').strip()
+        if len(account_token) == 32:
+            Vars.cfg.data['common_params']['login_token'] = account_token
+            Vars.cfg.save()
+            print("[info]login_token is saved in config.json")
+        else:
+            print('[warn]login_token is length error!\nplease input length 32 login_token:')
+            new_shell_login()
+    print("[input]please input your account name:")
+    account_name = get('>').strip()
+    if len(account_name) > 0 and "书客" in account_name:
+        Vars.cfg.data['common_params']['account'] = account_name
+        Vars.cfg.save()
+        print("account info is saved in config.json")
+    else:
+        print('[warn]account info is invalid!\nplease input again')
+        new_shell_login(1)
+
+
+# def tests_account_login():
+#     if HbookerAPI.SignUp.user_account() is not None:
+#         print("当前登入账号:", HbookerAPI.SignUp.user_account())
+#     else:
+#         if Vars.cfg.data.get('account_info') is not None:
+#             print("检测到本地配置文件，尝试自动登入...")
+#             response = HbookerAPI.SignUp.login(Vars.cfg.data['account_info'])
+#             if response.get('code') == '100000':
+#                 Vars.cfg.data['common_params'] = {
+#                     'account': response['data']['reader_info']['account'],
+#                     'login_token': response['data']['login_token'], 'app_version': '2.9.022'
+#                 }
+#                 Vars.cfg.save()
+#                 print("账号:", HbookerAPI.SignUp.user_account(), "自动登入成功！")
+#             else:
+#                 print("登入失败:", response.get('tip'))
+#         else:
+#             print("检测到本地配置文件账号信息为空，请手动登入！")
 
 
 def shell(inputs):
@@ -134,25 +187,22 @@ def shell(inputs):
     if choice == 'q' or choice == 'quit':
         sys.exit(3)
     elif choice == 'l' or choice == 'login':
-        shell_login(inputs)
+        new_shell_login()
     elif choice == 'd' or choice == 'download':
         shell_download_book(inputs)
     elif choice == 'bs' or choice == 'bookshelf':
         shell_bookshelf()
-    elif choice == 'up' or choice == 'updata':
+    elif choice == 'up' or choice == 'update':
         shell_update()
 
 
 def shell_parser():
     parser, shell_console = argparse.ArgumentParser(), False
-    # 注意在使用参数时，是用的参数的dest名字，而不是参数的名字
-    parser.add_argument("-l", "--login", dest="login", nargs='+', default=None, help="登录账号")
-    parser.add_argument("-d", "--download", dest="downloadbook", nargs=1, default=None, help="输入book-id")
-    parser.add_argument("-m", "--max", dest="threading_max", default=None, help="更改线程")
-    parser.add_argument("-up", "--update", dest="update", default=False, action="store_true", help="更新小说")
-    parser.add_argument("-bi", "--bookinfo", dest="bookinfo", nargs=1, default=None, help="输入book-id")
-    parser.add_argument("-sh", "--shell_help", dest="shell_help", default=False, action="store_true", help="说明")
-    parser.add_argument("-bs", "--bookshelf", dest="bookshelf", default=False, action="store_true", help="下载书架小说")
+    parser.add_argument("-d", "--download", dest="downloadbook", nargs=1, default=None, help="please input book_id")
+    parser.add_argument("-m", "--max", dest="threading_max", default=None, help="please input max threading")
+    parser.add_argument("-up", "--update", dest="update", default=False, action="store_true", help="update books")
+    parser.add_argument("-bi", "--bookinfo", dest="bookinfo", nargs=1, default=None, help="please input book_id")
+    parser.add_argument("-bs", "--bookshelf", default=False, action="store_true", help="download bookshelf books")
     parser.add_argument("-clear", "--clear_cache", dest="clear_cache", default=False, action="store_true")
     # parser.add_argument("-s", "--shell", dest="shell", default=False, action="store_true", help="显示操作终端")
     args = parser.parse_args()
@@ -183,26 +233,22 @@ def shell_parser():
             Vars.current_book.book_information()
         shell_console = True
 
-    if args.login is not None:
-        shell_login(['login'] + args.login)
-        shell_console = True
-
-    if args.shell_help or not shell_console:
-        for info in Vars.help_info:
-            print('[帮助]', info)
-        if args.shell_help:
-            shell_console = True
+    # if args.login is not None:  # invalid login
+    #     shell_login(['login'] + args.login)
+    #     shell_console = True
 
     if not shell_console:
+        for info in Vars.help_info:
+            print('[帮助]', info)
         while True:
             shell(re.split('\\s+', get('>').strip()))
 
 
 if __name__ == '__main__':
-    update_config()
-    # print(HbookerAPI.Book.get_updated_chapter_by_division_new('100297094'))
+    update_config()  # update config.json
     try:
-        tests_account_login()
-        shell_parser()
-    except KeyboardInterrupt:
+        new_tests_account_login()  # this is for login test
+        # tests_account_login() # this is invalid test account login
+        shell_parser()  # this is for shell
+    except KeyboardInterrupt:  # Ctrl+C to exit
         print('\n[提示]程序已退出')

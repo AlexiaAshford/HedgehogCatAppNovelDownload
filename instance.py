@@ -48,14 +48,13 @@ class Vars:
     out_text_file = None
     config_text = None
     help_info = [
-        '下载的书籍文件、缓存和配置文件在./Hbooker/下',
-        'quit \t\t\t\t 退出脚本',
-        'login \t\t\t\t <用户名> <密码> \t 登录欢乐书客帐号',
-        'help \t\t\t\t 用法与帮助',
-        'bookshelf \t\t\t\t 刷新并显示第一个书架列表',
-        'bookshelf \t\t\t\t <书架编号> \t 切换书架',
-        'download \t\t\t\t <书籍编号/书籍ID> \t 下载到最后章节为止',
-        'update \t\t\t\t 更新已下载的所有书籍并复制到updates文件夹'
+        'book text file and config file in ./Hbooker/',
+        'quit \t\t\t\t exit program',
+        'login \t\t\t\t <login_token> <account> \t login hbooker with account',
+        'bookshelf \t\t\t\t read bookshelf',
+        'bookshelf \t\t\t\t <bookshelf index> \t switch bookshelf',
+        'download \t\t\t\t <book id> \t download book',
+        'update \t\t\t\t update config.json downloaded_book_id_list',
     ]
 
 
@@ -63,7 +62,7 @@ def get_id(url: str) -> str:
     result = re.compile(r'(\d+)').findall(url)
     if len(result) > 0 and result[0].isdigit() and len(result[0]) == 9:
         return result[0]
-    print(f'[错误]无法从{url}搜索到书籍ID')
+    print("[warning] get_id failed", url)
 
 
 def write(file_path, mode='', data=''):
