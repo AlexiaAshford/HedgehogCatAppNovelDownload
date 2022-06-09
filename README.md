@@ -10,14 +10,6 @@
 - 支持 `自定义存储目录`，你可以在 *config.json* 文件里修改**save_path**和**out_path**的文件名
 - 文件存储位置 `./Hbooker` 以及 `./downloads` 目录下
 
-        'book text file and config file in ./Hbooker/',
-        'quit \t\t\t\t exit program',
-        'login \t\t\t\t <login_token> <account> \t login hbooker with account',
-        'bookshelf \t\t\t\t read bookshelf',
-        'bookshelf \t\t\t\t <bookshelf index> \t switch bookshelf',
-        'download \t\t\t\t <bookshelf index/book index> \t Download the last chapter',
-        'update \t\t\t\t update config.json downloaded_book_id_list',
-
 ## imitate the Microsoft Windows control panel
 
 ```bash
