@@ -65,19 +65,20 @@ def shell_download_book(inputs):
         if Vars.current_book is not None:
             Vars.current_book = book.Book(book_info=Vars.current_book.get('book_info'))
             print('开始下载书籍《' + Vars.current_book.book_name + '》')
-            Vars.current_book.get_division_list()
-            if len(Vars.current_book.chapter_list) != 0:
-                Vars.out_text_file = Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt'
-                Vars.config_text = Vars.cfg.data['save_path'] + Vars.current_book.book_name
-                makedir_config(file_path="", dir_path=Vars.config_text)
-                makedir_config(file_path=Vars.out_text_file, dir_path=Vars.cfg.data['out_path'])
-                Vars.current_book.download_chapter()
-            else:
-                print(Vars.current_book.book_name, "没有需要下载的章节！")
-            if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
-                Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
-                Vars.cfg.save()
-            print("耗时: {:.2f}秒".format(time.time() - start_time))
+            Vars.out_text_file = Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt'
+            Vars.config_text = Vars.cfg.data['save_path'] + Vars.current_book.book_name
+            makedir_config(file_path="", dir_path=Vars.config_text)
+            makedir_config(file_path=Vars.out_text_file, dir_path=Vars.cfg.data['out_path'])
+
+            if Vars.current_book.get_division_list():
+                if len(Vars.current_book.download_chapter_list) != 0:
+                    Vars.current_book.start_download_chapter()
+                else:
+                    print(Vars.current_book.book_name, "没有需要下载的章节！")
+                if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
+                    Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
+                    Vars.cfg.save()
+                print("耗时: {:.2f}秒".format(time.time() - start_time))
         else:
             print('获取书籍信息失败, book_id:', inputs[1])
     else:
@@ -135,6 +136,8 @@ def new_tests_account_login():
             sys.exit(0)
     if HbookerAPI.SignUp.user_account() is None:
         print("[warn]hbooker api test account is invalid, test your config.json information")
+        Vars.cfg.data.clear()
+        update_config()
         new_tests_account_login()
     else:
         print('[info]the current account is:', HbookerAPI.SignUp.user_account())
@@ -230,7 +233,6 @@ def shell_parser():
         Vars.current_book = HbookerAPI.Book.get_info_by_id(get_id(args.bookinfo[0])).get('data')
         if Vars.current_book is not None:
             Vars.current_book = book.Book(book_info=Vars.current_book.get('book_info'))
-            Vars.current_book.book_information()
         shell_console = True
 
     # if args.login is not None:  # invalid login

@@ -75,13 +75,11 @@ class BookShelf:
 class Book:
     @staticmethod
     def get_division_list(book_id: str):
-        data = {'book_id': book_id}
-        return get(UrlConstants.GET_DIVISION_LIST, data)
+        return get(UrlConstants.GET_DIVISION_LIST, {'book_id': book_id})
 
     @staticmethod
-    def get_chapter_update(division_id: str, last_update_time: str = '0'):
-        data = {'division_id': division_id, 'last_update_time': last_update_time}
-        return post(UrlConstants.GET_CHAPTER_UPDATE, data)
+    def get_chapter_update(division_id: str, update_time: str = '0'):
+        return post(UrlConstants.GET_CHAPTER_UPDATE, {'division_id': division_id, 'last_update_time': update_time})
 
     @staticmethod
     def get_info_by_id(book_id: str):
@@ -92,10 +90,8 @@ class Book:
 class Chapter:
     @staticmethod
     def get_chapter_command(chapter_id: str):
-        data = {'chapter_id': chapter_id}
-        return get('chapter/get_chapter_command', data)
+        return get('chapter/get_chapter_command', {'chapter_id': chapter_id})
 
     @staticmethod
     def get_cpt_ifm(chapter_id: str, chapter_command: str):
-        data = {'chapter_id': chapter_id, 'chapter_command': chapter_command}
-        return get('chapter/get_cpt_ifm', data)
+        return get('chapter/get_cpt_ifm', {'chapter_id': chapter_id, 'chapter_command': chapter_command})
