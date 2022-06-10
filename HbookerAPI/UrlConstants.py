@@ -1,5 +1,5 @@
 HAPPY = "https://app.happybooker.cn/"
-HBOOKER = ""
+HBOOKER = "https://app.hbooker.com/"
 ABOUT_URL = "setting/view_about"
 ADD_BBS_COMMENT = "bbs/add_bbs_comment"
 ADD_BBS_COMMENT_REPLY = "bbs/add_bbs_comment_reply"
