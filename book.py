@@ -23,11 +23,12 @@ class Book:
     def book_information(self):
         Vars.current_epub = Epub.EpubFile()
         Vars.current_epub.add_intro()  # add intro to epub
-        print('\n[info] 《' + self.book_name + '》')
+        print('\n[info] book-name:' + self.book_name)
         print('[info] author-name: ', self.author_name)
         print('[info] book-id:', self.book_id)
         print('[info] new chapter:', self.last_chapter['chapter_title'])
         print('[info] last update:', self.last_chapter['mtime'])
+        print('[info] book-cover-url:', self.cover)
 
     def get_division_list(self):
         self.book_information()
@@ -55,16 +56,20 @@ class Book:
         for thread in threading_list:  # wait for all threads to finish
             thread.join()
 
-        threading_list.clear()  # clear threading list
-        self.save_export_txt_epub()  # save export txt and epub
+        threading_list.clear()  # clear threading list after all threads finished
 
     def save_export_txt_epub(self):  # save export txt and epub
-        for index, file_name in enumerate(os.listdir(Vars.config_text)):
+        for chapter_index, file_name in enumerate(os.listdir(Vars.config_text)):
             file_info = write(Vars.config_text + "/" + file_name, 'r')
             with open(Vars.out_text_file, "a", encoding='utf-8') as _file:
                 _file.write("\n\n" + file_info)
-            Vars.current_epub.add_chapter("第" + str(index) + "章", file_info, index)
-        Vars.current_epub.save()
+            content_splitlines = file_info.splitlines()
+            if content_splitlines:
+                Vars.current_epub.add_chapter_in_epub_file(
+                    content_splitlines[0], content_splitlines[1:], str(chapter_index)
+                )
+        Vars.current_epub.download_cover_and_add_epub()
+        Vars.current_epub.save_epub_file()
         print('[提示] 《' + self.book_name + '》下载完成,已导出文件')  # show msg
 
     def show_progress(self):  # show progress

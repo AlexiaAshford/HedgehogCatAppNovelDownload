@@ -1,17 +1,21 @@
 # _HedgehogCatAppNovel_
 
-- 本项目由 HbookerAppNovelDownloader 老版本改写的， 原作者: [SeaLoong](https://github.com/SeaLoong)
-- 刺猬猫【原名欢乐书客】 小说下载器，基于刺猬猫API实现
-- 支持 `账号登入[关于账号登入，刺猬猫在新版本添加了极客校验，无法直接登入，请自行使用login_token/account来绕过验证]`
-- 支持 `付费章节下载`
-- 支持 `命令行操作`
-- 支持 `书籍的章节更新` / `更新检查`
-- 支持 `多线程下载`，默认线程为**32**，可在 *config.json* 文件里修改 **max_thread** 参数更改线程数
-- 支持 `自定义存储目录`，你可以在 *config.json* 文件里修改**save_path**和**out_path**的文件名
-- 文件存储位置 `./Hbooker` 以及 `./downloads` 目录下
+- project is open source
+- HbookerAppNovelDownloader project old version refactoring，project author name: [SeaLoong](https://github.com/SeaLoong)
+- ciweimao【happy booker】 Novel Downloader，Android API implementation
+- login your account to get your `token` to use this script
+- download the book as `epub` and `txt` files (if you have the permission)
+- support download `vip chapters`  the chapters save as epub files and txt files
+- you can use the `epub` and `txt` files to read the books
+- check for update books and chapters automatically
+- download chapters `multi threads` support default thread is `32`，you can change the `max_thread` to set the number of
+  threads
+- cache image in EPUB files `image is not saved in localstorage`
+- the path to save `epub` and txt `file` to local `./Hbooker` and `./downloads`
+- This customization adds a file path in the *config.json* that lets you change the location you want to save it to.
+
 
 ## imitate the Microsoft Windows control panel
-
 ```bash
 book text file and config file in ./Hbooker/
 q  | quit                                  --- exit program
@@ -23,21 +27,14 @@ bs | bookshelf                             --- read bookshelf
 
 ```
 
-## 命令行交互
+## command line
 
-- **下载书籍** ```python run.py --download bookid```
-- **更新书籍** ```python run.py --update ```
-- **显示书架** ```python run.py --bookshelf ```
-- **显示书籍** ```python run.py --bookinfo bookid```
-- **清除缓存** ```python run.py --clear_cache```
+- **download book** ``` --download bookid```
+- **update booklist** ``` --update ```
+- **show bookshelf** ``` --bookshelf ```
+- **bookinfo** ``` --bookinfo bookid```
+- **clear cache** ``` --clear_cache```
 -
-
-## 需求环境
-
-* Python3.6以上
-* requests
-* ebooklib
-* pycrypto或pycryptodome
 
 ## 此程序仅供个人备份文本，请勿用于任何盗版和传播
 

@@ -64,6 +64,7 @@ class SignUp:
 class BookShelf:
     @staticmethod
     def get_shelf_list():
+        "you can change the params to get the book list"
         return post(UrlConstants.BOOKSHELF_GET_SHELF_LIST)
 
     @staticmethod

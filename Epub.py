@@ -1,5 +1,17 @@
 from ebooklib import epub
 from instance import *
+import requests
+
+
+def get_cover_image(cover_url: str):
+    retry = 0
+    while True:
+        response = requests.get(cover_url)
+        if response.status_code == 200:
+            return response.content
+        retry += 1
+        if retry > 5:
+            return None
 
 
 class EpubFile:
@@ -21,26 +33,29 @@ class EpubFile:
         self.epub.add_item(intro_)
         self.EpubList.append(intro_)
 
-    def cover(self):
-        print("")
-        # self.epub.set_cover(self.book_name + '.png', API.Cover.download_cover())
+    def download_cover_and_add_epub(self):  # download cover image and add to epub file as cover
+        png_file = get_cover_image(Vars.current_book.cover)  # get cover image from url
+        if png_file is not None:  # if cover image is not None ,then add to epub file
+            self.epub.set_cover(Vars.current_book.book_name + '.png', png_file)  # add cover image to epub file
 
-    def add_chapter(self, chapter_title: str, content: str, serial_number: str):
+    def add_chapter_in_epub_file(self, chapter_title: str, content_lines_list: str, serial_number: str):
+        import uuid
         chapter_serial = epub.EpubHtml(
-            title=chapter_title, file_name=str(serial_number).rjust(4, "0") + '-' + chapter_title + '.xhtml',
-            lang='zh-CN', uid='chapter_{}'.format(serial_number)
+            title=chapter_title,
+            file_name=str(serial_number).rjust(4, "0") + '.xhtml',
+            lang='zh-CN',
+            uid=uuid.uuid4().hex
         )
-        chapter_serial.content = content.replace('\n', '</p>\r\n<p>')
-        self.epub.add_item(chapter_serial)
-        self.EpubList.append(chapter_serial)
+        chapter_serial.content = '</p>\r\n<p>'.join(content_lines_list)
+        self.epub.add_item(chapter_serial)  # add chapter to epub file as item
+        self.EpubList.append(chapter_serial)  # add chapter to epub list
 
-    def save(self):
-        self.cover()
+    def save_epub_file(self):  # save epub file to local
+        # the path to save epub file to local
         self.epub.toc = tuple(self.EpubList)
-        self.epub.spine = ['nav']
+        self.epub.spine = ['nav']  # add spine to epub file as spine
         self.epub.spine.extend(self.EpubList)
         self.epub.add_item(epub.EpubNcx()), self.epub.add_item(epub.EpubNav())
-        epub.write_epub(os.path.join(
-            Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt',
-            Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.epub'), self.epub, {}
-        )
+        epub.write_epub(
+            os.path.join(os.getcwd(), Vars.cfg.data['out_path'], Vars.current_book.book_name + '.epub'), self.epub, {}
+        )  # save epub file to out_path directory with book_name.epub
