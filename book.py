@@ -19,6 +19,7 @@ class Book:
         self.cover = book_info['cover'].replace(' ', '')
         self.last_chapter = book_info['last_chapter_info']
         self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data['max_thread'])
+        self.division = None
 
     def book_information(self):
         Vars.current_epub = Epub.EpubFile()
@@ -34,11 +35,11 @@ class Book:
         self.book_information()
         response = HbookerAPI.Book.get_division_list(self.book_id)  # get division list
         if response.get('code') == '100000':
-            division = catalog.Catalog(response['data']['division_list'])
-            division.get_division_information()
-            division.threading_get_chapter_list()
-            division.show_chapter_latest()
-            self.download_chapter_list, self.chapter_list_length = division.return_chapter_list()
+            self.division = catalog.Catalog(response['data']['division_list'])
+            self.division.get_division_information()
+            self.division.threading_get_chapter_list()
+            self.division.show_chapter_latest()
+            self.download_chapter_list, self.chapter_list_length = self.division.return_chapter_list()
             return True
         else:
             return print("[warning] get division list error code:", response.get('code'))
@@ -59,15 +60,30 @@ class Book:
         threading_list.clear()  # clear threading list after all threads finished
 
     def save_export_txt_epub(self):  # save export txt and epub
-        for chapter_index, file_name in enumerate(os.listdir(Vars.config_text)):
-            file_info = write(Vars.config_text + "/" + file_name, 'r')
+        self.division.get_division_list.sort(key=lambda x: int(x['division_index']))
+        for division in self.division.get_division_list:
+            division_name = division['division_name']
+            division_index = int(division['division_index'])
             with open(Vars.out_text_file, "a", encoding='utf-8') as _file:
-                _file.write("\n\n" + file_info)
-            content_splitlines = file_info.splitlines()
-            if content_splitlines:
-                Vars.current_epub.add_chapter_in_epub_file(
-                    content_splitlines[0], content_splitlines[1:], str(chapter_index)
-                )
+                volume_info = f"第{division_index}卷: {division_name}"
+                if division_index != 1:
+                    volume_info = "\n\n" + volume_info
+                _file.write(volume_info)
+            division_id = division['division_id']
+            if division_id in self.division.map:
+                chapter_ind = 1
+                for chapter in self.division.map[division_id]:
+                    chapter_id = chapter['chapter_id']
+                    chapter_title = chapter['chapter_title']
+                    file_info = write(f"{Vars.config_text}/{chapter_id}.txt", 'r')
+                    file_info = file_info.splitlines()
+                    file_info[0] = f"第{chapter_ind}章: {chapter_title}"
+                    with open(Vars.out_text_file, "a", encoding='utf-8') as _file:
+                        _file.write("\n\n" + "\n".join(file_info))
+                    Vars.current_epub.add_chapter_in_epub_file(
+                        file_info[0], file_info[1:], str(chapter_id)
+                    )
+                    chapter_ind += 1
         Vars.current_epub.download_cover_and_add_epub()
         Vars.current_epub.save_epub_file()
         print('[提示] 《' + self.book_name + '》下载完成,已导出文件')  # show msg
