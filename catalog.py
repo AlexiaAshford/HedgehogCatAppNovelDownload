@@ -8,7 +8,8 @@ class Catalog:
     def __init__(self, get_division_list):
         self.chapter_list = []
         self.download_chapter_id_list = []
-        self.get_division_list = get_division_list
+        self.map = {}
+        self.get_division_list: list = get_division_list
 
     def get_division_information(self):  # get division information and show it
         # clear chapter_list and download_chapter_id_list before get_division_information
@@ -26,6 +27,7 @@ class Catalog:
         response = HbookerAPI.Book.get_chapter_update(division['division_id'])
         if response.get('code') == '100000':  # if response is ok and data is not empty
             self.chapter_list.extend(response['data']['chapter_list'])  # add chapter_list to self.chapter_list
+            self.map[division['division_id']] = response['data']['chapter_list']
         else:
             print("threading_chapter_catalog error:", response.get("tip"))  # show error message if response is not ok
 
