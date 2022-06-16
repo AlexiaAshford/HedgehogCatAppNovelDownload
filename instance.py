@@ -40,6 +40,26 @@ class Config:
             print('保存配置文件时出错')
 
 
+class TextFile:
+    @staticmethod
+    def write(text_path: str = "", text_content: str = "", mode: str = "a") -> [str, None]:
+        try:
+            with open(text_path, mode, encoding="utf-8") as file:
+                file.write(text_content)
+        except Exception as error:
+            print("[error] text_file.write:", error)
+
+    @staticmethod
+    def read(text_path: str = "", split_list: bool = False) -> [str, None]:
+        try:
+            with open(text_path, "r", encoding="utf-8") as file:
+                if split_list:
+                    return file.read().splitlines()
+                return file.read()
+        except Exception as error:
+            print("[error] text_file.read:", error)
+
+
 class Vars:
     cfg = Config(os.getcwd() + '/config.json', os.getcwd())
     current_bookshelf = []
@@ -63,13 +83,6 @@ def get_id(url: str) -> str:
     if len(result) > 0 and result[0].isdigit() and len(result[0]) == 9:
         return result[0]
     print("[warning] get_id failed", url)
-
-
-def write(file_path, mode='', data=''):
-    if mode == 'r' or 'r' in mode:
-        return open(file_path, 'r', encoding='utf-8').read()
-    with open(file_path, mode, encoding='utf-8') as _file:
-        _file.write(data)
 
 
 def makedir_config(file_path, dir_path):

@@ -59,39 +59,29 @@ class Book:
 
         threading_list.clear()  # clear threading list after all threads finished
 
-    def save_export_txt_epub(self):  # save export txt and epub
+    def save_export_txt_epub(self):  # save export txt and epub file
         self.division.get_division_list.sort(key=lambda x: int(x['division_index']))
         for division in self.division.get_division_list:
-            division_name = division['division_name']
-            division_index = int(division['division_index'])
-            with open(Vars.out_text_file, "a", encoding='utf-8') as _file:
-                volume_info = f"第{division_index}卷: {division_name}"
-                if division_index != 1:
-                    volume_info = "\n\n" + volume_info
-                _file.write(volume_info)
-            division_id = division['division_id']
-            if division_id in self.division.map:
-                chapter_ind = 1
-                for chapter in self.division.map[division_id]:
-                    chapter_id = chapter['chapter_id']
-                    chapter_title = chapter['chapter_title']
-                    file_info = write(f"{Vars.config_text}/{chapter_id}.txt", 'r')
-                    file_info = file_info.splitlines()
-                    # 修复404章节
-                    if chapter_title == '该章节未审核通过':
+            volume_info = "第{}卷: {}".format(int(division['division_index']), division['division_name'])
+            if int(division['division_index']) != 1:  # the division is not the first
+                volume_info = "\n\n" + volume_info
+            TextFile.write(text_path=Vars.out_text_file, text_content=volume_info)  # write volume info to txt
+            if division['division_id'] in self.division.map:  # the division has chapter list
+                for chapter_index, chapter in enumerate(self.division.map[division['division_id']], start=1):
+                    chapter_id, chapter_title = chapter['chapter_id'], chapter['chapter_title']
+                    file_info = TextFile.read(text_path=f"{Vars.config_text}/{chapter_id}.txt", split_list=True)
+                    if chapter_title == '该章节未审核通过':  # the chapter is not approved
                         chapter_title = file_info[0].split(':')[1].lstrip()
-                    file_info[0] = f"第{chapter_ind}章: {chapter_title}"
-                    with open(Vars.out_text_file, "a", encoding='utf-8') as _file:
-                        _file.write("\n\n" + "\n".join(file_info))
-                    Vars.current_epub.add_chapter_in_epub_file(
-                        file_info[0], file_info[1:], str(chapter_id)
-                    )
-                    chapter_ind += 1
-        Vars.current_epub.download_cover_and_add_epub()
-        Vars.current_epub.save_epub_file()
+                    file_info[0] = "第{}章: {}".format(chapter_index, chapter_title)
+                    TextFile.write(text_path=Vars.out_text_file, text_content="\n\n" + "\n".join(file_info))
+                    Vars.current_epub.add_chapter_in_epub_file(file_info[0], file_info[1:], str(chapter_id))
+            else:
+                print("[warning] the division has no chapter list", division['division_id'])
+        Vars.current_epub.download_cover_and_add_epub()  # download cover and add to epub file
+        Vars.current_epub.save_epub_file()  # save epub file to local
         print('[提示] 《' + self.book_name + '》下载完成,已导出文件')  # show msg
 
-    def show_progress(self):  # show progress
+    def show_progress(self):  # show progress of download chapter
         self.current_progress += 1  # add progress count by 1
         print('[{} 下载进度]: {}/{}'.format(
             self.book_name,
@@ -101,21 +91,21 @@ class Book:
 
     def download_threading(self, chapter_id: str, command_key: str):
         self.pool_sema.acquire()  # acquire semaphore to avoid threading conflict
+        self.show_progress()  # show progress of download chapter
         response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, command_key)
         if response2.get('code') == '100000' and response2['data']['chapter_info']['chapter_title'] != '该章节未审核通过':
             if response2['data']['chapter_info']['chapter_title'] is None:
                 self.pool_sema.release()  # release semaphore when chapter_title is None
                 return False
-            txt_content = response2['data']['chapter_info']['txt_content']
-            with open(Vars.config_text + "/" + chapter_id + ".txt", 'w', encoding='utf-8') as _file:
-                _file.write("第" + response2['data']['chapter_info']['chapter_index'] + "章: ")
-                _file.write(response2['data']['chapter_info']['chapter_title'] + "\n")
-                _file.write(HbookerAPI.HttpUtil.decrypt(txt_content, command_key).decode('utf-8'))
-            self.show_progress()
-            self.pool_sema.release()
+            write_content = "第" + response2['data']['chapter_info']['chapter_index'] + "章: "
+            write_content += response2['data']['chapter_info']['chapter_title'] + "\n\n"
+            write_content += HbookerAPI.HttpUtil.decrypt(
+                response2['data']['chapter_info']['txt_content'], command_key).decode('utf-8')
+            TextFile.write(text_path=Vars.config_text + "/" + chapter_id + ".txt", text_content=write_content)
+
+            self.pool_sema.release()  # release semaphore to avoid threading conflict when download finished
         else:
-            self.show_progress()
-            if response2['data']['chapter_info']['chapter_title'] == '该章节未审核通过':
+            if response2['data']['chapter_info']['chapter_title'] == '该章节未审核通过':  # the chapter is not approved
                 print('chapter_id:', chapter_id, ', 该章节为屏蔽章节，不进行下载')
             else:
                 print(response2['data']['chapter_info']['chapter_title'], ', 该章节为空章节，标记为已下载')

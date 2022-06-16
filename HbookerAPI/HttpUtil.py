@@ -1,4 +1,5 @@
 import json
+import time
 from Crypto.Cipher import AES
 import base64
 import hashlib
@@ -12,7 +13,7 @@ def decrypt(encrypted: str, key: str = 'zG2nSeEfSHfvTCHy5LCcqtBbQehKNLXn') -> by
     return data[0:len(data) - ord(chr(data[len(data) - 1]))]
 
 
-def get(url, headers: dict, params=None, max_retry=10, **kwargs):
+def get(url, headers: dict, params=None, max_retry: int = 5, **kwargs):
     for retry in range(max_retry):
         try:
             with requests.Session() as session:
@@ -20,7 +21,10 @@ def get(url, headers: dict, params=None, max_retry=10, **kwargs):
                 return json.loads(decrypt(str(result.text)))
         except requests.exceptions.RequestException:
             if retry > 3:
-                print("Max retries exceeded with url:", url)
+                print("retries get with url:", url, "retry:", retry)
+            if retry == max_retry - 1:
+                quit("Max retries exceeded with url:" + url)
+            time.sleep(0.5 * retry)
 
 
 def post(url, headers: dict, params=None, max_retry=10, **kwargs):
@@ -31,4 +35,7 @@ def post(url, headers: dict, params=None, max_retry=10, **kwargs):
                 return json.loads(decrypt(result.text))
         except requests.exceptions.RequestException:
             if retry > 3:
-                print(" Max retries exceeded with url:", url)
+                print("retries post with url:", url, "retry:", retry)
+            if retry == max_retry - 1:
+                quit("Max retries exceeded with url:" + url)
+            time.sleep(0.5 * retry)
