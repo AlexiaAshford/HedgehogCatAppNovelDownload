@@ -77,6 +77,9 @@ class Book:
                     chapter_title = chapter['chapter_title']
                     file_info = write(f"{Vars.config_text}/{chapter_id}.txt", 'r')
                     file_info = file_info.splitlines()
+                    # 修复404章节
+                    if chapter_title == '该章节未审核通过':
+                        chapter_title = file_info[0].split(':')[1].lstrip()
                     file_info[0] = f"第{chapter_ind}章: {chapter_title}"
                     with open(Vars.out_text_file, "a", encoding='utf-8') as _file:
                         _file.write("\n\n" + "\n".join(file_info))
