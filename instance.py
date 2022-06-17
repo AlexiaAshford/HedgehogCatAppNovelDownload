@@ -50,7 +50,10 @@ class TextFile:
             print("[error] text_file.write:", error)
 
     @staticmethod
-    def read(text_path: str = "", split_list: bool = False) -> [str, None]:
+    def read(text_path: str = "", split_list: bool = False,
+             allow_file_not_found: bool = False) -> [str, None]:
+        if allow_file_not_found and not os.path.exists(text_path):
+            return None
         try:
             with open(text_path, "r", encoding="utf-8") as file:
                 if split_list:

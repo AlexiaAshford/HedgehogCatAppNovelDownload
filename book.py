@@ -70,7 +70,10 @@ class Book:
                 if division['division_id'] in self.division.map:  # the division has chapter list
                     for chapter_index, chapter in enumerate(self.division.map[division['division_id']], start=1):
                         chapter_id, chapter_title = chapter['chapter_id'], chapter['chapter_title']
-                        file_info = TextFile.read(text_path=f"{Vars.config_text}/{chapter_id}.txt", split_list=True)
+                        file_info = TextFile.read(text_path=f"{Vars.config_text}/{chapter_id}.txt", split_list=True, allow_file_not_found=True)
+                        # If file not found, this mean the chapter need to buy.
+                        if file_info is None:
+                            file_info = [f"第{chapter_index}章: {chapter_title}", "未购买章节"]
                         if chapter_title == '该章节未审核通过':  # the chapter is not approved
                             chapter_title = file_info[0].split(':')[1].lstrip()
                         file_info[0] = "第{}章: {}".format(chapter_index, chapter_title)
