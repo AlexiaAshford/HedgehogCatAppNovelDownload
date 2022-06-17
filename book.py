@@ -102,7 +102,7 @@ class Book:
                 self.pool_sema.release()  # release semaphore when chapter_title is None
                 return False
             write_content = "第" + response2['data']['chapter_info']['chapter_index'] + "章: "
-            write_content += response2['data']['chapter_info']['chapter_title'] + "\n\n"
+            write_content += response2['data']['chapter_info']['chapter_title'] + "\n"
             write_content += HbookerAPI.HttpUtil.decrypt(
                 response2['data']['chapter_info']['txt_content'], command_key).decode('utf-8')
             TextFile.write(text_path=Vars.config_text + "/" + chapter_id + ".txt", text_content=write_content)
