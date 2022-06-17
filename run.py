@@ -68,7 +68,7 @@ def shell_download_book(inputs):
             Vars.out_text_file = Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt'
             Vars.config_text = Vars.cfg.data['save_path'] + Vars.current_book.book_name
             makedir_config(file_path="", dir_path=Vars.config_text)
-            makedir_config(file_path=Vars.out_text_file, dir_path=Vars.cfg.data['out_path'])
+            makedir_config(file_path="", dir_path=Vars.cfg.data['out_path'])
 
             if Vars.current_book.get_division_list():
                 if len(Vars.current_book.download_chapter_list) != 0:
@@ -76,7 +76,6 @@ def shell_download_book(inputs):
                     Vars.current_book.save_export_txt_epub()  # save export txt and epub file
                 else:
                     print(Vars.current_book.book_name, "没有需要下载的章节！")
-                    Vars.current_book.save_export_txt_epub()
 
                 if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
                     Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)

@@ -60,23 +60,24 @@ class Book:
         threading_list.clear()  # clear threading list after all threads finished
 
     def save_export_txt_epub(self):  # save export txt and epub file
-        self.division.get_division_list.sort(key=lambda x: int(x['division_index']))
-        for division in self.division.get_division_list:
-            volume_info = "第{}卷: {}".format(int(division['division_index']), division['division_name'])
-            if int(division['division_index']) != 1:  # the division is not the first
-                volume_info = "\n\n" + volume_info
-            TextFile.write(text_path=Vars.out_text_file, text_content=volume_info)  # write volume info to txt
-            if division['division_id'] in self.division.map:  # the division has chapter list
-                for chapter_index, chapter in enumerate(self.division.map[division['division_id']], start=1):
-                    chapter_id, chapter_title = chapter['chapter_id'], chapter['chapter_title']
-                    file_info = TextFile.read(text_path=f"{Vars.config_text}/{chapter_id}.txt", split_list=True)
-                    if chapter_title == '该章节未审核通过':  # the chapter is not approved
-                        chapter_title = file_info[0].split(':')[1].lstrip()
-                    file_info[0] = "第{}章: {}".format(chapter_index, chapter_title)
-                    TextFile.write(text_path=Vars.out_text_file, text_content="\n\n" + "\n".join(file_info))
-                    Vars.current_epub.add_chapter_in_epub_file(file_info[0], file_info[1:], str(chapter_id))
-            else:
-                print("[warning] the division has no chapter list", division['division_id'])
+        with open(Vars.out_text_file, 'w', encoding="utf-8") as f:
+            self.division.get_division_list.sort(key=lambda x: int(x['division_index']))
+            for division in self.division.get_division_list:
+                volume_info = "第{}卷: {}".format(int(division['division_index']), division['division_name'])
+                if int(division['division_index']) != 1:  # the division is not the first
+                    volume_info = "\n\n" + volume_info
+                f.write(volume_info)
+                if division['division_id'] in self.division.map:  # the division has chapter list
+                    for chapter_index, chapter in enumerate(self.division.map[division['division_id']], start=1):
+                        chapter_id, chapter_title = chapter['chapter_id'], chapter['chapter_title']
+                        file_info = TextFile.read(text_path=f"{Vars.config_text}/{chapter_id}.txt", split_list=True)
+                        if chapter_title == '该章节未审核通过':  # the chapter is not approved
+                            chapter_title = file_info[0].split(':')[1].lstrip()
+                        file_info[0] = "第{}章: {}".format(chapter_index, chapter_title)
+                        f.write("\n\n" + "\n".join(file_info))
+                        Vars.current_epub.add_chapter_in_epub_file(file_info[0], file_info[1:], str(chapter_id))
+                else:
+                    print("[warning] the division has no chapter list", division['division_id'])
         Vars.current_epub.download_cover_and_add_epub()  # download cover and add to epub file
         Vars.current_epub.save_epub_file()  # save epub file to local
         print('[提示] 《' + self.book_name + '》下载完成,已导出文件')  # show msg
