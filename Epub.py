@@ -146,6 +146,7 @@ class EpubFile:
         self.epub.set_identifier(Vars.current_book.book_id)
         self.epub.set_title(Vars.current_book.book_name)
         self.epub.add_author(Vars.current_book.author_name)
+        self.last_division_name = ''
 
     def add_intro(self):
         intro_ = epub.EpubHtml(title='简介信息', file_name='0000-000000-intro.xhtml', lang='zh-CN')
@@ -167,7 +168,7 @@ class EpubFile:
                 file_name = Vars.current_book.book_name + '.png'
             self.epub.set_cover(file_name, png_file)  # add cover image to epub file
 
-    def add_chapter_in_epub_file(self, chapter_title: str, content_lines_list: List[str], serial_number: str):
+    def add_chapter_in_epub_file(self, chapter_title: str, content_lines_list: List[str], serial_number: str, division_name: str):
         import uuid
         chapter_serial = epub.EpubHtml(
             title=chapter_title,
@@ -175,6 +176,10 @@ class EpubFile:
             lang='zh-CN',
             uid='u' + uuid.uuid4().hex,  # XML name can not start with diget
         )
+        # Set the content as auxiliary content
+        # See https://www.w3.org/publishing/epub3/epub-packages.html#attrdef-itemref-linear
+        if division_name == '作品相关':
+            chapter_serial.is_linear = False
         parser = ContentParser()
         parser.feed('</p>\r\n<p>'.join(content_lines_list))
         parser.close()
@@ -188,13 +193,26 @@ class EpubFile:
             img.content = img_content
             img.id = 'i' + uuid.uuid4().hex
             self.epub.add_item(img)
-        self.EpubList.append(chapter_serial)  # add chapter to epub list
+        if self.last_division_name != division_name:
+            self.EpubList.append([epub.Link(chapter_serial.file_name, division_name), []])
+            self.last_division_name = division_name
+        self.EpubList[-1][-1].append(chapter_serial)  # add chapter to epub list
 
     def save_epub_file(self):  # save epub file to local
         # the path to save epub file to local
-        self.epub.toc = tuple(self.EpubList)
-        self.epub.spine = ['nav']  # add spine to epub file as spine
-        self.epub.spine.extend(self.EpubList)
+        self.epub.toc = self.EpubList
+        self.epub.spine = []
+        for i in self.EpubList:
+            if isinstance(i, list):
+                for j in i:
+                    if not isinstance(j, epub.Link):
+                        if isinstance(j, list):
+                            for k in j:
+                                self.epub.spine.append(k)
+                        else:
+                            self.epub.spine.append(j)
+            else:
+                self.epub.spine.append(i)
         self.epub.add_item(epub.EpubNcx()), self.epub.add_item(epub.EpubNav())
         epub.write_epub(
             os.path.join(os.getcwd(), Vars.cfg.data['out_path'], Vars.current_book.book_name + '.epub'), self.epub, {}

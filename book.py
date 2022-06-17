@@ -63,7 +63,8 @@ class Book:
         with open(Vars.out_text_file, 'w', encoding="utf-8") as f:
             self.division.get_division_list.sort(key=lambda x: int(x['division_index']))
             for division in self.division.get_division_list:
-                volume_info = "第{}卷: {}".format(int(division['division_index']), division['division_name'])
+                division_name = division['division_name']
+                volume_info = "第{}卷: {}".format(int(division['division_index']), division_name)
                 if int(division['division_index']) != 1:  # the division is not the first
                     volume_info = "\n\n" + volume_info
                 f.write(volume_info)
@@ -75,10 +76,10 @@ class Book:
                         if file_info is None:
                             file_info = [f"第{chapter_index}章: {chapter_title}", "未购买章节" if chapter_title != "该章节未审核通过" else f"{chapter_title}(章节ID：{chapter_id})"]
                         if chapter_title == '该章节未审核通过':  # the chapter is not approved
-                            chapter_title = file_info[0].split(':')[1].lstrip()
+                            chapter_title = file_info[0].split(':', 1)[1].lstrip()
                         file_info[0] = "第{}章: {}".format(chapter_index, chapter_title)
                         f.write("\n\n" + "\n".join(file_info))
-                        Vars.current_epub.add_chapter_in_epub_file(file_info[0], file_info[1:], str(chapter_id))
+                        Vars.current_epub.add_chapter_in_epub_file(chapter_title, file_info[1:], str(chapter_id), division_name)
                 else:
                     print("[warning] the division has no chapter list", division['division_id'])
         Vars.current_epub.download_cover_and_add_epub()  # download cover and add to epub file
