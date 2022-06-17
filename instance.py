@@ -70,6 +70,7 @@ class Vars:
     current_epub = None
     out_text_file = None
     config_text = None
+    force_output = False
     help_info = [
         'book text file and config file in ./Hbooker/',
         'quit \t\t\t\t exit program',

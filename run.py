@@ -76,6 +76,8 @@ def shell_download_book(inputs):
                     Vars.current_book.save_export_txt_epub()  # save export txt and epub file
                 else:
                     print(Vars.current_book.book_name, "没有需要下载的章节！")
+                    if Vars.force_output:
+                        Vars.current_book.save_export_txt_epub()  # save export txt and epub file
 
                 if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
                     Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
@@ -210,7 +212,9 @@ def shell_parser():
     parser.add_argument("-bs", "--bookshelf", default=False, action="store_true", help="download bookshelf books")
     parser.add_argument("-clear", "--clear_cache", dest="clear_cache", default=False, action="store_true")
     # parser.add_argument("-s", "--shell", dest="shell", default=False, action="store_true", help="显示操作终端")
+    parser.add_argument("-f", "--force", action="store_true", default=False, dest="force", help="Export to txt and epub files even when there is no new content downloaded.")
     args = parser.parse_args()
+    Vars.force_output = args.force
     if args.bookshelf:
         shell_bookshelf()
         shell_console = True
