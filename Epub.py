@@ -44,7 +44,7 @@ class EpubFile:
             title=chapter_title,
             file_name=str(serial_number).rjust(4, "0") + '.xhtml',
             lang='zh-CN',
-            uid=uuid.uuid4().hex
+            uid='u' + uuid.uuid4().hex  # XML name can not start with diget
         )
         chapter_serial.content = '</p>\r\n<p>'.join(content_lines_list)
         self.epub.add_item(chapter_serial)  # add chapter to epub file as item
