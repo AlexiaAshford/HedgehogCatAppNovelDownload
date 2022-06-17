@@ -1,5 +1,4 @@
 from ebooklib import epub
-from genericpath import exists
 from html.parser import HTMLParser
 from instance import *
 import os
@@ -52,7 +51,7 @@ class HTMLImage:
             if file_name == "":
                 return False
             self.path = os.path.join(Vars.config_text, file_name)
-        if exists(self.path):
+        if os.path.exists(self.path):
             return True
         retry = 0
         while True:
