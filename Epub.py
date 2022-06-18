@@ -96,11 +96,21 @@ class ContentParser(HTMLParser):
 
     def handle_data(self, data: str):
         if self._in_paragraph:
-            self._paragraph_data += data
+            if isinstance(self._paragraph_data, str):
+                self._paragraph_data += data
+            elif isinstance(self._paragraph_data, list):
+                self._paragraph_data.append(data)
 
     def handle_starttag(self, tag, attrs):
         if tag == 'img':
-            self.data.append(HTMLImage(attrs))
+            if self._in_paragraph:
+                if self._paragraph_data:
+                    self._paragraph_data = [self._paragraph_data]
+                else:
+                    self._paragraph_data = []
+                self._paragraph_data.append(HTMLImage(attrs))
+            else:
+                self.data.append(HTMLImage(attrs))
         elif tag == 'p':
             self._in_paragraph = True
         else:
@@ -117,22 +127,36 @@ class ContentParser(HTMLParser):
         else:
             raise NotImplementedError()
 
-    def have_image(self) -> bool:
-        for i in self.data:
+    def have_image(self, data_list=None) -> bool:
+        if data_list is None:
+            data_list = self.data
+        for i in data_list:
             if isinstance(i, HTMLImage):
                 if i.is_valid():
                     return True
+            elif isinstance(i, list):
+                if self.have_image(i):
+                    return True
         return False
 
-    def to_local(self) -> str:
+    def to_local(self, data_list=None) -> str:
+        default_data_list = False
+        if data_list is None:
+            data_list = self.data
+            default_data_list = True
         data = ''
-        for i in self.data:
+        for i in data_list:
             if isinstance(i, str):
-                data += f'<p>{i}</p>\n'
+                if default_data_list:
+                    data += f'<p>{i}</p>\n'
+                else:
+                    data += i
             elif isinstance(i, HTMLImage):
                 if i.is_valid():
                     data += i.to_local()
                     self.images.append(i)
+            elif isinstance(i, list):
+                data += f'<p>{self.to_local(i)}</p>\n'
             else:
                 raise NotImplementedError()
         if self._paragraph_data:
