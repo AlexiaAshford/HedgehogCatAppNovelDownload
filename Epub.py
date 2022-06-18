@@ -157,6 +157,7 @@ class EpubFile:
         # intro_.content += '<p>简介信息:</p>{}</body></html>'.format(intro)
         self.epub.add_item(intro_)
         self.EpubList.append(intro_)
+        self.epub.spine.append(intro_)
 
     def download_cover_and_add_epub(self):  # download cover image and add to epub file as cover
         png_file = get_cover_image(Vars.current_book.cover)  # get cover image from url
@@ -181,7 +182,7 @@ class EpubFile:
         if division_name == '作品相关':
             chapter_serial.is_linear = False
         parser = ContentParser()
-        parser.feed('</p>\r\n<p>'.join(content_lines_list))
+        parser.feed('</p>\n<p>'.join(content_lines_list))
         parser.close()
         chapter_serial.content = parser.to_local()
         self.epub.add_item(chapter_serial)  # add chapter to epub file as item
@@ -197,22 +198,11 @@ class EpubFile:
             self.EpubList.append([epub.Link(chapter_serial.file_name, division_name), []])
             self.last_division_name = division_name
         self.EpubList[-1][-1].append(chapter_serial)  # add chapter to epub list
+        self.epub.spine.append(chapter_serial)
 
     def save_epub_file(self):  # save epub file to local
         # the path to save epub file to local
         self.epub.toc = self.EpubList
-        self.epub.spine = []
-        for i in self.EpubList:
-            if isinstance(i, list):
-                for j in i:
-                    if not isinstance(j, epub.Link):
-                        if isinstance(j, list):
-                            for k in j:
-                                self.epub.spine.append(k)
-                        else:
-                            self.epub.spine.append(j)
-            else:
-                self.epub.spine.append(i)
         self.epub.add_item(epub.EpubNcx()), self.epub.add_item(epub.EpubNav())
         epub.write_epub(
             os.path.join(os.getcwd(), Vars.cfg.data['out_path'], Vars.current_book.book_name + '.epub'), self.epub, {}
