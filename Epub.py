@@ -184,7 +184,7 @@ class EpubFile:
         parser = ContentParser()
         parser.feed('</p>\n<p>'.join(content_lines_list))
         parser.close()
-        chapter_serial.content = parser.to_local()
+        chapter_serial.content = '<h1 style="text-align: center;">{}</h1>\n'.format(chapter_title) + parser.to_local()
         self.epub.add_item(chapter_serial)  # add chapter to epub file as item
         for oimg in parser.images:
             with open(oimg.path, 'rb') as f:
