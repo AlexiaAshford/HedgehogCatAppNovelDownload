@@ -88,18 +88,32 @@ class HTMLImage:
 class ContentParser(HTMLParser):
     def __init__(self):
         super().__init__()
+        self._in_paragraph = False
         self.data = []
         # Local image file lists
         self.images = []
+        self._paragraph_data = ''
 
     def handle_data(self, data: str):
-        self.data.append(data)
+        if self._in_paragraph:
+            self._paragraph_data += data
 
     def handle_starttag(self, tag, attrs):
         if tag == 'img':
             self.data.append(HTMLImage(attrs))
         elif tag == 'p':
+            self._in_paragraph = True
+        else:
+            raise NotImplementedError()
+
+    def handle_endtag(self, tag: str):
+        if tag == 'img':
             pass
+        elif tag == 'p':
+            self._in_paragraph = False
+            if self._paragraph_data:
+                self.data.append(self._paragraph_data)
+                self._paragraph_data = ''
         else:
             raise NotImplementedError()
 
@@ -121,6 +135,8 @@ class ContentParser(HTMLParser):
                     self.images.append(i)
             else:
                 raise NotImplementedError()
+        if self._paragraph_data:
+            data += f'<p>{self._paragraph_data}</p>\n'
         return data
 
 
@@ -182,7 +198,7 @@ class EpubFile:
         if division_name == '作品相关':
             chapter_serial.is_linear = False
         parser = ContentParser()
-        parser.feed('</p>\n<p>'.join(content_lines_list))
+        parser.feed('<p>' + '</p>\n<p>'.join(content_lines_list) + '</p>')
         parser.close()
         chapter_serial.content = '<h1 style="text-align: center;">{}</h1>\n'.format(chapter_title) + parser.to_local()
         self.epub.add_item(chapter_serial)  # add chapter to epub file as item
