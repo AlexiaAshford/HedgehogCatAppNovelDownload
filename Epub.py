@@ -235,6 +235,8 @@ class EpubFile:
             img.file_name = oimg.epub_path
             img.content = img_content
             img.id = 'i' + uuid.uuid4().hex
+            if oimg.epub_path.endswith('.webp'):
+                img.media_type = 'image/webp'
             self.epub.add_item(img)
         if self.last_division_name != division_name:
             self.EpubList.append([epub.Link(chapter_serial.file_name, division_name), []])
