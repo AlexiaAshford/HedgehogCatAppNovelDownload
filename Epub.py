@@ -1,5 +1,7 @@
+import ebooklib
 from ebooklib import epub
 from html.parser import HTMLParser
+from lxml import etree
 from instance import *
 import os
 from posixpath import basename
@@ -14,8 +16,75 @@ except ImportError:
         print('python-magic-bin is also needed on Windows.')
 from urllib.parse import urlparse
 import requests
-from typing import List
+import subprocess
+from typing import List, Optional
 import xml.etree.ElementTree as ET
+
+
+# Add fallback property to ebooklib
+# ebooklib does not support fallback
+class EpubItem(epub.EpubItem):
+    def __init__(self, uid=None, file_name='', media_type='', content=epub.six.b(''), manifest=True):
+        super().__init__(uid, file_name, media_type, content, manifest)
+        self.fallback = None
+
+
+class EpubImage(EpubItem):
+    def __init__(self):
+        super().__init__()
+
+    def get_type(self):
+        return ebooklib.ITEM_IMAGE
+
+    def __str__(self):
+        return '<EpubImage:%s:%s>' % (self.id, self.file_name)
+
+
+class EpubWriter(epub.EpubWriter):
+    def _write_opf_manifest(self, root):
+        manifest = epub.etree.SubElement(root, 'manifest')
+        _ncx_id = None
+
+        for item in self.book.get_items():
+            if not item.manifest:
+                continue
+
+            if isinstance(item, epub.EpubNav):
+                etree.SubElement(manifest, 'item', {'href': item.get_name(),
+                                                    'id': item.id,
+                                                    'media-type': item.media_type,
+                                                    'properties': 'nav'})
+            elif isinstance(item, epub.EpubNcx):
+                _ncx_id = item.id
+                etree.SubElement(manifest, 'item', {'href': item.file_name,
+                                                    'id': item.id,
+                                                    'media-type': item.media_type})
+
+            elif isinstance(item, epub.EpubCover):
+                etree.SubElement(manifest, 'item', {'href': item.file_name,
+                                                    'id': item.id,
+                                                    'media-type': item.media_type,
+                                                    'properties': 'cover-image'})
+            else:
+                opts = {'href': item.file_name,
+                        'id': item.id,
+                        'media-type': item.media_type}
+
+                if hasattr(item, 'properties') and len(item.properties) > 0:
+                    opts['properties'] = ' '.join(item.properties)
+
+                if hasattr(item, 'media_overlay') and item.media_overlay is not None:
+                    opts['media-overlay'] = item.media_overlay
+
+                if hasattr(item, 'media_duration') and item.media_duration is not None:
+                    opts['duration'] = item.media_duration
+
+                if hasattr(item, 'fallback') and item.fallback is not None:
+                    opts['fallback'] = item.fallback
+
+                etree.SubElement(manifest, 'item', opts)
+
+        return _ncx_id
 
 
 def get_cover_image(cover_url: str):
@@ -27,6 +96,35 @@ def get_cover_image(cover_url: str):
         retry += 1
         if retry > 5:
             return None
+
+
+have_ffmpeg = None
+def check_ffmpeg():
+    p = subprocess.Popen(['ffmpeg', '-h'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    p.communicate()
+    global have_ffmpeg
+    have_ffmpeg = not p.wait()
+    if not have_ffmpeg:
+        print('Warning: Can not find ffmpeg. Some epub readers may failed to open these pictures.')
+
+
+def perform_convert(image_path: str) -> Optional[str]:
+    output_path = os.path.splitext(image_path)[0] + '_fallback.jpg'
+    if os.path.exists(output_path) and os.path.getsize(output_path) > 4096:
+        return output_path
+    if have_ffmpeg is None:
+        check_ffmpeg()
+    if have_ffmpeg:
+        p = subprocess.Popen(['ffmpeg', '-y', '-i', image_path, output_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        p.communicate()
+        code = p.wait()
+        if not code:
+            return output_path
+        else:
+            print(f'Warning: Can not convert images by using ffmpeg. (Exit code: {code}) Some epub readers may failed to open these pictures.')
+            return None
+    else:
+        return None
 
 
 class HTMLImage:
@@ -231,13 +329,23 @@ class EpubFile:
         for oimg in parser.images:
             with open(oimg.path, 'rb') as f:
                 img_content = f.read()
-            img = epub.EpubImage()
+            img = EpubImage()
             img.file_name = oimg.epub_path
             img.content = img_content
             img.id = 'i' + uuid.uuid4().hex
+            self.epub.add_item(img)
             if oimg.epub_path.endswith('.webp'):
                 img.media_type = 'image/webp'
-            self.epub.add_item(img)
+                jpg_path = perform_convert(oimg.path)
+                if jpg_path is not None:
+                    jpg_img = epub.EpubImage()
+                    with open(jpg_path, 'rb') as f:
+                        jpg_content = f.read()
+                    jpg_img.file_name = os.path.basename(jpg_path)
+                    jpg_img.content = jpg_content
+                    jpg_img.id = img.id + 'f'
+                    img.fallback = jpg_img.id
+                    self.epub.add_item(jpg_img)
         if self.last_division_name != division_name:
             self.EpubList.append([epub.Link(chapter_serial.file_name, division_name), []])
             self.last_division_name = division_name
@@ -248,6 +356,12 @@ class EpubFile:
         # the path to save epub file to local
         self.epub.toc = self.EpubList
         self.epub.add_item(epub.EpubNcx()), self.epub.add_item(epub.EpubNav())
-        epub.write_epub(
+        book = EpubWriter(
             os.path.join(os.getcwd(), Vars.cfg.data['out_path'], Vars.current_book.book_name + '.epub'), self.epub, {}
-        )  # save epub file to out_path directory with book_name.epub
+        )
+        book.process()
+        try:
+            book.write()
+        except IOError:
+            from traceback import print_exc
+            print_exc()
