@@ -173,6 +173,8 @@ def get_extension(mime: str) -> str:
         return '.png'
     elif mime == 'image/svg+xml':
         return '.svg'
+    elif mime == 'image/webp':  # EPUB 3.3 Draft
+        return '.webp'
     else:
         print(mime)
         raise NotImplementedError()
