@@ -96,3 +96,41 @@ class Chapter:
     @staticmethod
     def get_cpt_ifm(chapter_id: str, chapter_command: str):
         return get('chapter/get_cpt_ifm', {'chapter_id': chapter_id, 'chapter_command': chapter_command})
+
+
+class Geetest:
+    @staticmethod
+    def get_gt_challenge():
+        return get('geetest/get_gt_challenge')
+
+    @staticmethod
+    def get_gt_validate(challenge: str, validate: str, security_code: str):
+        return get('geetest/get_gt_validate',
+                   {'challenge': challenge, 'validate': validate, 'security_code': security_code})
+
+    @staticmethod
+    def get_gt_result(challenge: str, validate: str, security_code: str):
+        return get('geetest/get_gt_result',
+                   {'challenge': challenge, 'validate': validate, 'security_code': security_code})
+
+    @staticmethod
+    def get_gt_new_captcha():
+        return get('geetest/get_gt_new_captcha')
+
+    @staticmethod
+    def get_gt_new_result(challenge: str, validate: str, security_code: str):
+        return get('geetest/get_gt_new_result',
+                   {'challenge': challenge, 'validate': validate, 'security_code': security_code})
+
+    @staticmethod
+    def get_gt_new_validate(challenge: str, validate: str, security_code: str):
+        return get('geetest/get_gt_new_validate',
+                   {'challenge': challenge, 'validate': validate, 'security_code': security_code})
+
+    @staticmethod
+    def get_gt_new_security_code(challenge: str, validate: str):
+        return get('geetest/get_gt_new_security_code', {'challenge': challenge, 'validate': validate})
+
+    @staticmethod
+    def get_gt_new_challenge():
+        return get('geetest/get_gt_new_challenge')
