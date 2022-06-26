@@ -1,9 +1,16 @@
 # _HedgehogCatAppNovel_
+- ### **_Thank you for [lifegpc](https://github.com/lifegpc) contribution._**
 
+## ciweimao Login
+- **~~login your account to get your `token` to use this script~~**
+- third party captcha geetest has been adding to the ciweimao official server. 
+- ciweimao login is protected by geetest, which seems impossible to circumvent.
+- you can **`Packet Capture`** of the `ciweimao Android App` to get the `account` and `login_token` login.
+- 
+## project description
 - project is open source
 - HbookerAppNovelDownloader project old version refactoring，project author name: [SeaLoong](https://github.com/SeaLoong)
 - ciweimao【happy booker】 Novel Downloader，Android API implementation
-- login your account to get your `token` to use this script
 - download the book as `epub` and `txt` files (if you have the permission)
 - support download `vip chapters`  the chapters save as epub files and txt files
 - you can use the `epub` and `txt` files to read the books
