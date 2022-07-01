@@ -58,6 +58,6 @@ class Catalog:
             ):  # show progress bar and add chapter_id and command_key to self.threading_chapter_id_list
                 result.result()  # if result is not None then add to self.threading_chapter_id_list
             track_index += 1  # add 1 to track_index for next loop
-        print("\n[info]this book download chapter length:",
-              len(self.download_chapter_id_list))  # show need to download chapter length
+        # print("\n[info]this book download chapter length:",
+        #       len(self.download_chapter_id_list))  # show need to download chapter length
         return self.download_chapter_id_list, len(self.download_chapter_id_list)  # return id_list and download length

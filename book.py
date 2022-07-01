@@ -22,8 +22,14 @@ class Book:
         self.division = None
 
     def book_information(self):
+        print('开始下载书籍《' + self.book_name + '》')
+        Vars.out_text_file, Vars.config_text = (
+            Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt',
+            Vars.cfg.data['save_path'] + Vars.current_book.book_name)
+
+        makedir_config(dir_path=[Vars.config_text, Vars.cfg.data['out_path']])
         Vars.current_epub = Epub.EpubFile()
-        Vars.current_epub.add_intro()  # add intro to epub
+        Vars.current_epub.add_book_intro_in_epub()
         print('\n[info] book-name:' + self.book_name)
         print('[info] author-name: ', self.author_name)
         print('[info] book-id:', self.book_id)
@@ -31,8 +37,7 @@ class Book:
         print('[info] last update:', self.last_chapter['mtime'])
         print('[info] book-cover-url:', self.cover)
 
-    def get_division_list(self):
-        self.book_information()
+    def get_division_list(self) -> bool:  # get division list from hbooker api
         response = HbookerAPI.Book.get_division_list(self.book_id)  # get division list
         if response.get('code') == '100000':
             self.division = catalog.Catalog(response['data']['division_list'])
@@ -42,7 +47,7 @@ class Book:
             self.download_chapter_list, self.chapter_list_length = self.division.return_chapter_list()
             return True
         else:
-            return print("[warning] get division list error code:", response.get('code'))
+            print('[error] get division list error:', response['tip'])
 
     def start_download_chapter(self):  # start download chapter and save to txt
         # create threading to download chapter and save to txt and epub file
@@ -71,15 +76,18 @@ class Book:
                 if division['division_id'] in self.division.map:  # the division has chapter list
                     for chapter_index, chapter in enumerate(self.division.map[division['division_id']], start=1):
                         chapter_id, chapter_title = chapter['chapter_id'], chapter['chapter_title']
-                        file_info = TextFile.read(text_path=f"{Vars.config_text}/{chapter_id}.txt", split_list=True, allow_file_not_found=True)
+                        file_info = TextFile.read(text_path=f"{Vars.config_text}/{chapter_id}.txt", split_list=True,
+                                                  allow_file_not_found=True)
                         # If file not found, this mean the chapter need to buy or the chapter is not approved.
                         if file_info is None:
-                            file_info = [f"第{chapter_index}章: {chapter_title}", "未购买章节" if chapter_title != "该章节未审核通过" else f"{chapter_title}(章节ID：{chapter_id})"]
+                            file_info = [f"第{chapter_index}章: {chapter_title}",
+                                         "未购买章节" if chapter_title != "该章节未审核通过" else f"{chapter_title}(章节ID：{chapter_id})"]
                         if chapter_title == '该章节未审核通过':  # the chapter is not approved
                             chapter_title = file_info[0].split(':', 1)[1].lstrip()
                         file_info[0] = "第{}章: {}".format(chapter_index, chapter_title)
                         f.write("\n\n" + "\n".join(file_info))
-                        Vars.current_epub.add_chapter_in_epub_file(chapter_title, file_info[1:], str(chapter_id), division_name)
+                        Vars.current_epub.add_chapter_in_epub_file(chapter_title, file_info[1:], str(chapter_id),
+                                                                   division_name)
                 else:
                     print("[warning] the division has no chapter list", division['division_id'])
         Vars.current_epub.download_cover_and_add_epub()  # download cover and add to epub file

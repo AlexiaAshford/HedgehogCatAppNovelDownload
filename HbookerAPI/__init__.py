@@ -60,6 +60,10 @@ class SignUp:
         else:
             print("Error:", response.get('tip'), "请先登入账号！")
 
+    @staticmethod
+    def get_ciweimao_version() -> dict:
+        return post(UrlConstants.MY_SETTING_UPDATE)
+
 
 class BookShelf:
     @staticmethod

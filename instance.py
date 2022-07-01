@@ -82,18 +82,22 @@ class Vars:
     ]
 
 
-def get_id(url: str) -> str:
+def get_id(url: str) -> [str, list]:
     result = re.compile(r'(\d+)').findall(url)
-    if len(result) > 0 and result[0].isdigit() and len(result[0]) == 9:
+    if result:
         return result[0]
-    print("[warning] get_id failed", url)
+    else:
+        return ['bookid not found']
 
 
-def makedir_config(file_path, dir_path):
-    if not os.path.isdir(dir_path):
-        os.makedirs(dir_path)
-    if '.txt' in file_path:
-        open(file_path, 'w').close()
+def makedir_config(dir_path: [str, list] = ""):
+    if isinstance(dir_path, str):
+        if not os.path.isdir(dir_path):
+            os.makedirs(dir_path)
+    elif isinstance(dir_path, list):
+        for d in dir_path:
+            if not os.path.isdir(d):
+                os.makedirs(d)
 
 
 def get(prompt, default=None):

@@ -288,13 +288,16 @@ class EpubFile:
         self.epub.add_author(Vars.current_book.author_name)
         self.last_division_name = ''
 
-    def add_intro(self):
-        intro_ = epub.EpubHtml(title='简介信息', file_name='0000-000000-intro.xhtml', lang='zh-CN')
-        intro_.content = '<html><head></head><body><h1>简介</h1>'
-        intro_.content += '<p>书籍书名:{} 书籍序号:{}</p>'.format(Vars.current_book.book_name, Vars.current_book.book_id)
-        # intro_.content += '<p>书籍作者:{} 更新时间:{}</p>'.format(Vars.current_book.author_name, up_time)
-        # intro_.content += '<p>最新章节:{}</p><p>系统标签:{}</p>'.format(up_chapter, novel_tag)
-        # intro_.content += '<p>简介信息:</p>{}</body></html>'.format(intro)
+    def add_book_intro_in_epub(self) -> None:
+        intro_ = epub.EpubHtml(title='book-detailed', file_name='0000-000000-intro.xhtml', lang='zh-CN')
+        intro_.content = '<html><head></head><body>'
+        intro_.content += '<h1>书籍书名:{}</h1><p>书籍序号:{}</p>'.format(
+            Vars.current_book.book_name, Vars.current_book.book_id
+        )
+        intro_.content += '<p>书籍作者:{}</p><p>更新时间:{}</p>'.format(
+            Vars.current_book.author_name, Vars.current_book.last_chapter['uptime']
+        )
+        intro_.content += '<p>最新章节:{}</p></body></html>'.format(Vars.current_book.last_chapter['chapter_title'])
         self.epub.add_item(intro_)
         self.EpubList.append(intro_)
         self.epub.spine.append(intro_)

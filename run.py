@@ -1,6 +1,6 @@
 import sys
 import time
-from rich import print
+# from rich import print
 import book
 from instance import *
 import HbookerAPI
@@ -60,31 +60,47 @@ def shell_bookshelf():  # download bookshelf book
 
 def shell_download_book(inputs):
     if len(inputs) >= 2:
-        start_time = time.time()
-        Vars.current_book = HbookerAPI.Book.get_info_by_id(get_id(inputs[1])).get('data')
-        if Vars.current_book is not None:
-            Vars.current_book = book.Book(book_info=Vars.current_book.get('book_info'))
-            print('开始下载书籍《' + Vars.current_book.book_name + '》')
-            Vars.out_text_file = Vars.cfg.data['out_path'] + Vars.current_book.book_name + '.txt'
-            Vars.config_text = Vars.cfg.data['save_path'] + Vars.current_book.book_name
-            makedir_config(file_path="", dir_path=Vars.config_text)
-            makedir_config(file_path="", dir_path=Vars.cfg.data['out_path'])
+        start_time, book_id = time.time(), get_id(inputs[1])
+        if not str(book_id).isdigit():
+            print('[ warning ] book-id is not digit')
+            Vars.current_book = None
+        elif len(str(book_id)) != 9:
+            print('[ warning ] book-book-id is not 9 digits')
+            Vars.current_book = None
+        else:
+            Vars.current_book = HbookerAPI.Book.get_info_by_id(book_id)
+            if Vars.current_book.get('code') != '100000':
+                print("code:", Vars.current_book.get('code'), "Msg:", Vars.current_book.get("tip"))
+                if "您当前使用的app版本已过期" in Vars.current_book.get("tip"):
+                    response = HbookerAPI.SignUp.get_ciweimao_version()
+                    if response is not None and isinstance(response, dict):
+                        print("过期安卓app版本号 : " + Vars.cfg.data['common_params']['app_version'])
+                        print("最新安卓app版本号 : " + response['data']['android_version'])
+                        print("自动更新本地缓存版本号...")
+                        Vars.cfg.data['common_params']['app_version'] = response['data'].get('android_version')
+                        Vars.cfg.save()
+                    else:
+                        print("获取服务器版本号失败，请检查网络连接，或者联系手动更改app版本号")
+                Vars.current_book = None
 
+        if Vars.current_book is not None and isinstance(Vars.current_book, dict):
+            Vars.current_book = book.Book(book_info=Vars.current_book.get('data').get('book_info'))
+
+            Vars.current_book.book_information()
             if Vars.current_book.get_division_list():
                 if len(Vars.current_book.download_chapter_list) != 0:
                     Vars.current_book.start_download_chapter()
                     Vars.current_book.save_export_txt_epub()  # save export txt and epub file
+                    if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
+                        Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
+                        Vars.cfg.save()
+                    print("下载{} 耗时: {:.2f}秒".format(Vars.current_book.book_name, time.time() - start_time))
                 else:
-                    print(Vars.current_book.book_name, "没有需要下载的章节！")
+                    print("[info]" + Vars.current_book.book_name, "download chapter list is empty")
                     if Vars.force_output:
                         Vars.current_book.save_export_txt_epub()  # save export txt and epub file
 
-                if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
-                    Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
-                    Vars.cfg.save()
-                print("耗时: {:.2f}秒".format(time.time() - start_time))
-        else:
-            print('获取书籍信息失败, book_id:', inputs[1])
+                Vars.current_book = None
     else:
         print('未输入book_id')
 
@@ -212,7 +228,8 @@ def shell_parser():
     parser.add_argument("-bs", "--bookshelf", default=False, action="store_true", help="download bookshelf books")
     parser.add_argument("-clear", "--clear_cache", dest="clear_cache", default=False, action="store_true")
     # parser.add_argument("-s", "--shell", dest="shell", default=False, action="store_true", help="显示操作终端")
-    parser.add_argument("-f", "--force", action="store_true", default=False, dest="force", help="Export to txt and epub files even when there is no new content downloaded.")
+    parser.add_argument("-f", "--force", action="store_true", default=False, dest="force",
+                        help="Export to txt and epub files even when there is no new content downloaded.")
     args = parser.parse_args()
     Vars.force_output = args.force
     if args.bookshelf:
