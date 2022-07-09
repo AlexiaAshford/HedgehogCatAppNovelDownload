@@ -5,13 +5,16 @@ from lxml import etree
 from instance import *
 import os
 from posixpath import basename
+
 try:
     import magic
+
     have_magic = True
 except ImportError:
     have_magic = False
     print('Warning: python-magic not found. The mimetype in EPUB file may wrong.')
     import platform
+
     if platform.system() == "Windows":
         print('python-magic-bin is also needed on Windows.')
 from urllib.parse import urlparse
@@ -99,6 +102,8 @@ def get_cover_image(cover_url: str):
 
 
 have_ffmpeg = None
+
+
 def check_ffmpeg():
     p = subprocess.Popen(['ffmpeg', '-h'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     p.communicate()
@@ -115,13 +120,15 @@ def perform_convert(image_path: str) -> Optional[str]:
     if have_ffmpeg is None:
         check_ffmpeg()
     if have_ffmpeg:
-        p = subprocess.Popen(['ffmpeg', '-y', '-i', image_path, output_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        p = subprocess.Popen(['ffmpeg', '-y', '-i', image_path, output_path], stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
         p.communicate()
         code = p.wait()
         if not code:
             return output_path
         else:
-            print(f'Warning: Can not convert images by using ffmpeg. (Exit code: {code}) Some epub readers may failed to open these pictures.')
+            print(
+                f'Warning: Can not convert images by using ffmpeg. (Exit code: {code}) Some epub readers may failed to open these pictures.')
             return None
     else:
         return None
@@ -176,7 +183,7 @@ class HTMLImage:
             with open(self.path, 'rb') as f:
                 mime = magic.from_buffer(f.read(4096), True)
             self.epub_path = os.path.splitext(self.epub_path)[0] + get_extension(mime)
-        d = { 'src': self.epub_path }
+        d = {'src': self.epub_path}
         if self.alt:
             d['alt'] = self.alt
         return ET.tostring(ET.Element('img', d), 'unicode')
@@ -251,8 +258,11 @@ class ContentParser(HTMLParser):
                     data += i
             elif isinstance(i, HTMLImage):
                 if i.is_valid():
-                    data += i.to_local()
-                    self.images.append(i)
+                    try:
+                        data += i.to_local()
+                        self.images.append(i)
+                    except ValueError:
+                        print("the image is not valid.", i.src)
             elif isinstance(i, list):
                 data += f'<p>{self.to_local(i)}</p>\n'
             else:
@@ -312,7 +322,8 @@ class EpubFile:
                 file_name = Vars.current_book.book_name + '.png'
             self.epub.set_cover(file_name, png_file)  # add cover image to epub file
 
-    def add_chapter_in_epub_file(self, chapter_title: str, content_lines_list: List[str], serial_number: str, division_name: str):
+    def add_chapter_in_epub_file(self, chapter_title: str, content_lines_list: List[str], serial_number: str,
+                                 division_name: str):
         import uuid
         chapter_serial = epub.EpubHtml(
             title=chapter_title,
