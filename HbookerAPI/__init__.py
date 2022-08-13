@@ -1,3 +1,5 @@
+import random
+import re
 from HbookerAPI import HttpUtil, UrlConstants
 from instance import *
 
@@ -104,22 +106,32 @@ class Chapter:
 
 class Geetest:
     @staticmethod
-    def get_gt_challenge():
-        return get('geetest/get_gt_challenge')
+    def get_use_geetest():
+        return post('signup/use_geetest')
 
     @staticmethod
-    def get_gt_validate(challenge: str, validate: str, security_code: str):
-        return get('geetest/get_gt_validate',
-                   {'challenge': challenge, 'validate': validate, 'security_code': security_code})
+    def get_gt_challenge(user_id: str):
+        data = {'t': int(HttpUtil.time.time() * 1000), 'user_id': user_id}
+        return HttpUtil.requests.post(url='https://app.happybooker.cn/signup/geetest_first_register', data=data).json()
 
     @staticmethod
-    def get_gt_result(challenge: str, validate: str, security_code: str):
-        return get('geetest/get_gt_result',
-                   {'challenge': challenge, 'validate': validate, 'security_code': security_code})
+    def get_w(gt: str, challenge: str):
+        data = ""
+        for i in range(4):
+            data += (format((int((1 + random.random()) * 65536) | 0), "x")[1:])
+        api_payload = {"e": data, "gt": gt, "challenge": challenge}
+        return HttpUtil.requests.post(url="api_fullpage/get_w", data=api_payload).text
 
     @staticmethod
-    def get_gt_new_captcha():
-        return get('geetest/get_gt_new_captcha')
+    def get_gt_gettype(gt: str):
+        params = {'gt': gt, 't': int(HttpUtil.time.time() * 1000)}
+        response = HttpUtil.requests.get(url='https://api.geetest.com/gettype.php', params=params)
+        return json.loads(response.text.replace('(', '').replace(')', ''))
+
+    @staticmethod
+    def get_ajax(challenge: str, gt: str, w: str):
+        params = {'gt': gt, 'challenge': challenge, 'lang': 'zh-CN', 'client_type': 'web', 'pt': 0, 'w': w}
+        return HttpUtil.requests.get('https://api.geetest.com/ajax.php', params=params).text
 
     @staticmethod
     def get_gt_new_result(challenge: str, validate: str, security_code: str):
@@ -134,7 +146,3 @@ class Geetest:
     @staticmethod
     def get_gt_new_security_code(challenge: str, validate: str):
         return get('geetest/get_gt_new_security_code', {'challenge': challenge, 'validate': validate})
-
-    @staticmethod
-    def get_gt_new_challenge():
-        return get('geetest/get_gt_new_challenge')

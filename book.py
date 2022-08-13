@@ -14,12 +14,15 @@ class Book:
         self.download_chapter_list = []
         self.book_info = book_info
         self.book_id = book_info['book_id']
-        self.book_name = book_info['book_name']
         self.author_name = book_info['author_name']
         self.cover = book_info['cover'].replace(' ', '')
         self.last_chapter = book_info['last_chapter_info']
         self.pool_sema = threading.BoundedSemaphore(Vars.cfg.data['max_thread'])
         self.division = None
+
+    @property
+    def book_name(self) -> str:  # 删除windows不规范字符
+        return re.sub(r'[\\/:*?"<>|]', '', self.book_info['book_name'])
 
     def book_information(self):
         print('开始下载书籍《' + self.book_name + '》')
@@ -106,7 +109,8 @@ class Book:
         self.pool_sema.acquire()  # acquire semaphore to avoid threading conflict
         self.show_progress()  # show progress of download chapter
         response2 = HbookerAPI.Chapter.get_cpt_ifm(chapter_id, command_key)
-        if response2.get('code') == '100000' and response2['data']['chapter_info']['chapter_title'] != '该章节未审核通过':
+        if response2.get('code') == '100000' and response2['data']['chapter_info'][
+            'chapter_title'] != '该章节未审核通过':
             if response2['data']['chapter_info']['chapter_title'] is None:
                 self.pool_sema.release()  # release semaphore when chapter_title is None
                 return False
