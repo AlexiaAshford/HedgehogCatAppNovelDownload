@@ -1,6 +1,6 @@
 import sys
 import time
-# from rich import print
+import cache
 import book
 from instance import *
 import HbookerAPI
@@ -26,7 +26,6 @@ def shell_bookshelf():  # download bookshelf book
     if book_list.get('code') == '100000':
         for index, data in enumerate(book_list['data']['book_list']):
             Vars.current_bookshelf.append(book.Book(book_info=data['book_info'], index=str(index + 1)))
-
         for book_info in Vars.current_bookshelf:  # print bookshelf book list
             print("\nindex:", book_info.index)
             print('name:', book_info.book_name, " author:", book_info.author_name, " id:", book_info.book_id)
@@ -41,68 +40,73 @@ def shell_bookshelf():  # download bookshelf book
         print("code:", book_list.get('code'), "Msg:", book_list.get("tip"))
 
 
-# def shell_login(inputs): # invalid login
-#     if len(inputs) >= 3:
-#         Vars.cfg.data['account_info'] = {'login_name': inputs[1], 'passwd': inputs[2]}
-#         response = HbookerAPI.SignUp.login(Vars.cfg.data.get('account_info'))
-#         if response.get('code') == '100000':
-#             Vars.cfg.data['common_params'] = {
-#                 'account': response['data']['reader_info']['account'],
-#                 'login_token': response['data']['login_token'], 'app_version': '2.9.022'
-#             }
-#             Vars.cfg.save()
-#             print('登录成功, 当前用户昵称为:', HbookerAPI.SignUp.user_account())
-#         else:
-#             print(response.get('tip'))
-#     else:
-#         print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
+def shell_login(inputs):  # invalid login
+    if len(inputs) >= 3:
+        Vars.cfg.data['account_info'] = {'login_name': inputs[1], 'passwd': inputs[2]}
+        response = HbookerAPI.SignUp.login(Vars.cfg.data.get('account_info'))
+        if response.get('code') == '100000':
+            Vars.cfg.data['common_params'] = {
+                'account': response['data']['reader_info']['account'],
+                'login_token': response['data']['login_token'], 'app_version': '2.9.290'
+            }
+            Vars.cfg.save()
+            print('登录成功, 当前用户昵称为:', HbookerAPI.SignUp.user_account())
+        else:
+            print(response.get('tip'))
+    else:
+        print("当前用户昵称为:", HbookerAPI.SignUp.user_account())
+
+
+def update_android_version(book_id: str):
+    if "您当前使用的app版本已过期" in Vars.current_book.get("tip", ""):
+        response = HbookerAPI.SignUp.get_ciweimao_version()
+        if response is not None and isinstance(response, dict):
+            print("过期安卓app版本号 : " + Vars.cfg.data['common_params']['app_version'])
+            print("最新安卓app版本号 : " + response['data']['android_version'])
+            print("自动更新本地缓存版本号...")
+            Vars.cfg.data['common_params']['app_version'] = response['data'].get('android_version')
+            Vars.cfg.save()
+            exit("[info] update version success, please run again")
+        else:
+            exit("[error] get ciweimao version error, please check network or update app version in config.json")
+    else:
+        print('[error] get book info error:', Vars.current_book.get('tip'))
+        cache.test_cache_and_init_object(book_id)  # test cache and init object
 
 
 def shell_download_book(inputs):
     if len(inputs) >= 2:
         start_time, book_id = time.time(), get_id(inputs[1])
-        if not str(book_id).isdigit():
-            print('[ warning ] book-id is not digit')
-            Vars.current_book = None
-        elif len(str(book_id)) != 9:
-            print('[ warning ] book-book-id is not 9 digits')
-            Vars.current_book = None
-        else:
-            Vars.current_book = HbookerAPI.Book.get_info_by_id(book_id)
-            if Vars.current_book.get('code') != '100000':
-                print("code:", Vars.current_book.get('code'), "Msg:", Vars.current_book.get("tip"))
-                if "您当前使用的app版本已过期" in Vars.current_book.get("tip"):
-                    response = HbookerAPI.SignUp.get_ciweimao_version()
-                    if response is not None and isinstance(response, dict):
-                        print("过期安卓app版本号 : " + Vars.cfg.data['common_params']['app_version'])
-                        print("最新安卓app版本号 : " + response['data']['android_version'])
-                        print("自动更新本地缓存版本号...")
-                        Vars.cfg.data['common_params']['app_version'] = response['data'].get('android_version')
-                        Vars.cfg.save()
-                    else:
-                        print("获取服务器版本号失败，请检查网络连接，或者联系手动更改app版本号")
-                Vars.current_book = None
-
-        if Vars.current_book is not None and isinstance(Vars.current_book, dict):
+        if not str(book_id).isdigit() or len(str(book_id)) != 9:
+            print('[ warning ] book-book-id is invalid, please check your input')
+            return False  # book id is invalid return False
+        Vars.current_book = HbookerAPI.Book.get_info_by_id(book_id)
+        if Vars.current_book.get('code') == '100000':
             Vars.current_book = book.Book(book_info=Vars.current_book.get('data').get('book_info'))
+        else:
+            update_android_version(book_id)
+            if Vars.current_book is None:
+                return False  # get book info error return False
 
-            Vars.current_book.book_information()
-            if Vars.current_book.get_division_list():
-                if len(Vars.current_book.download_chapter_list) != 0:
-                    Vars.current_book.start_download_chapter()
+        # save book info to cache file
+        cache.save_cache(f"{Vars.current_book.book_id}.json", Vars.current_book.book_info)
+
+        Vars.current_book.book_information()
+        if Vars.current_book.get_division_list():
+            if len(Vars.current_book.download_chapter_list) != 0:
+                Vars.current_book.start_download_chapter()
+                Vars.current_book.save_export_txt_epub()  # save export txt and epub file
+                if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
+                    Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
+                    Vars.cfg.save()
+                print("{} cost time: {:.2f} seconds".format(Vars.current_book.book_name, time.time() - start_time))
+            else:
+                print("[info]" + Vars.current_book.book_name, "download chapter list is empty")
+                if Vars.force_output:
                     Vars.current_book.save_export_txt_epub()  # save export txt and epub file
-                    if Vars.cfg.data['downloaded_book_id_list'].count(Vars.current_book.book_id) == 0:
-                        Vars.cfg.data['downloaded_book_id_list'].append(Vars.current_book.book_id)
-                        Vars.cfg.save()
-                    print("下载{} 耗时: {:.2f}秒".format(Vars.current_book.book_name, time.time() - start_time))
-                else:
-                    print("[info]" + Vars.current_book.book_name, "download chapter list is empty")
-                    if Vars.force_output:
-                        Vars.current_book.save_export_txt_epub()  # save export txt and epub file
-
-                Vars.current_book = None
+            Vars.current_book = None
     else:
-        print('未输入book_id')
+        print('[info] book id is empty, please check your input')
 
 
 def shell_update():
@@ -124,9 +128,13 @@ def update_config():
         Vars.cfg.data['save_path'] = "./Hbooker/"
     if not isinstance(Vars.cfg.data.get('out_path'), str):
         Vars.cfg.data['out_path'] = "./downloads/"
+    if not isinstance(Vars.cfg.data.get('local_cache_dir'), str):
+        Vars.cfg.data['local_cache_dir'] = "./LocalCache/"
+    if not isinstance(Vars.cfg.data.get('backups_local_cache'), bool):
+        Vars.cfg.data['backups_local_cache'] = True
     if not isinstance(Vars.cfg.data.get('common_params'), dict):
         Vars.cfg.data['common_params'] = {
-            'login_token': "", 'account': "", 'app_version': '2.9.022', 'device_token': 'ciweimao_'}
+            'login_token': "", 'account': "", 'app_version': '2.9.290', 'device_token': 'ciweimao_'}
     Vars.cfg.save()
 
 
@@ -195,7 +203,7 @@ def new_shell_login(frequency=0):
 #             if response.get('code') == '100000':
 #                 Vars.cfg.data['common_params'] = {
 #                     'account': response['data']['reader_info']['account'],
-#                     'login_token': response['data']['login_token'], 'app_version': '2.9.022'
+#                     'login_token': response['data']['login_token'], 'app_version': '2.9.290'
 #                 }
 #                 Vars.cfg.save()
 #                 print("账号:", HbookerAPI.SignUp.user_account(), "自动登入成功！")

@@ -1,9 +1,8 @@
 import random
-import re
 from HbookerAPI import HttpUtil, UrlConstants
 from instance import *
 
-headers = {'User-Agent': 'Android Android com.kuangxiangciweimao.novel'}
+headers = {'User-Agent': 'Android com.kuangxiangciweimao.novel 2.9.290'}
 
 
 def compared_version(ver1, ver2="2.9.281"):
