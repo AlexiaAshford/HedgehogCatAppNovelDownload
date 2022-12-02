@@ -51,7 +51,7 @@ class Catalog:
             return print("the chapter_list is empty")  # if chapter_list is empty return
         division_list_length, track_index = len(self.get_division_list), 1  # track_index is used to show progress
 
-        with ThreadPoolExecutor(max_workers=32 if division_list_length >= 32 else division_list_length) as executor:
+        with ThreadPoolExecutor(max_workers=64) as executor:
             for result in track(
                     [executor.submit(self.threading_add_key_and_id, data) for data in self.chapter_list],
                     description=f"length: {division_list_length} Loading..."
