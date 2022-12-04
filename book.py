@@ -42,11 +42,16 @@ class Book:
 
     def get_division_list(self) -> bool:  # get division list from hbooker api
         # response = HbookerAPI.Book.get_division_list(self.book_id)  # get division list
-        response = HbookerAPI.Book.get_division_list_new(self.book_id)
+        response = HbookerAPI.Book.get_division_list_new(self.book_id)  # new api get division list
         if response.get('code') == '100000':
             self.division = catalog.Catalog(response['data']['chapter_list'])
             self.division.get_division_information()
-            self.division.threading_get_chapter_list()
+            # self.division.threading_get_chapter_list()
+            for division in self.division.get_division_list:
+                chapter_list = division["chapter_list"]
+                self.division.chapter_list.extend(chapter_list)  # add chapter_list to self.chapter_list
+                self.division.map[division['division_id']] = chapter_list
+
             self.division.show_chapter_latest()
             self.download_chapter_list, self.chapter_list_length = self.division.return_chapter_list()
             return True
@@ -77,7 +82,6 @@ class Book:
                 if int(division['division_index']) != 1:  # the division is not the first
                     volume_info = "\n\n" + volume_info
                 f.write(volume_info)
-
 
                 if division['division_id'] in self.division.map:  # the division has chapter list
                     for chapter_index, chapter in enumerate(self.division.map[division['division_id']], start=1):

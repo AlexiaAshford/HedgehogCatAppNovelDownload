@@ -89,7 +89,6 @@ class Book:
 
     @staticmethod
     def get_division_list_new(book_id: str):
-        # change new division list api
         return get(UrlConstants.GET_CHAPTER_UPDATE_NEW, {'book_id': book_id})
 
     @staticmethod

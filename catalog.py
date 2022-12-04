@@ -32,16 +32,11 @@ class Catalog:
     #     else:
     #         print("threading_chapter_catalog error:", response.get("tip"))  # show error message if response is not ok
 
-    def threading_get_chapter_list(self):
-        for division in self.get_division_list:
-            chapter_list = division["chapter_list"]
-            self.chapter_list.extend(chapter_list)  # add chapter_list to self.chapter_list
-            self.map[division['division_id']] = chapter_list
-
-        # with ThreadPoolExecutor(max_workers=len(self.get_division_list)) as executor:
-        #     for division in self.get_division_list:
-        #         executor.submit(self.threading_chapter_catalog, division)
-        # self.chapter_list.sort(key=lambda x: int(x['chapter_index']))  # sort chapter_list by chapter_index
+    # def threading_get_chapter_list(self):
+    #     with ThreadPoolExecutor(max_workers=len(self.get_division_list)) as executor:
+    #         for division in self.get_division_list:
+    #             executor.submit(self.threading_chapter_catalog, division)
+    #     self.chapter_list.sort(key=lambda x: int(x['chapter_index']))  # sort chapter_list by chapter_index
 
     def threading_add_key_and_id(self, data) -> None:  # add chapter_id and command_key to threading_chapter_id_list
         if data['chapter_id'] + '.txt' in os.listdir(Vars.config_text) or data['auth_access'] == '0':
