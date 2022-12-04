@@ -21,21 +21,27 @@ class Catalog:
         shield_chapter_length = len([i for i in self.chapter_list if i['chapter_title'] == '该章节未审核通过'])
         if shield_chapter_length != 0:  # if chapter is not downloaded and not shield chapter
             print("\n[提示]本书一共有", shield_chapter_length, "章被屏蔽")  # show shield chapter
-        print('\n[提示]最新章节:', self.chapter_list[-1]['chapter_title'], "\t更新时间:", self.chapter_list[-1]['mtime'])
+        print('\n[提示]最新章节:', self.chapter_list[-1]['chapter_title'], "\t更新时间:",
+              self.chapter_list[-1]['mtime'])
 
-    def threading_chapter_catalog(self, division):  # get chapter_list and add to self.chapter_list
-        response = HbookerAPI.Book.get_chapter_update(division['division_id'])
-        if response.get('code') == '100000':  # if response is ok and data is not empty
-            self.chapter_list.extend(response['data']['chapter_list'])  # add chapter_list to self.chapter_list
-            self.map[division['division_id']] = response['data']['chapter_list']
-        else:
-            print("threading_chapter_catalog error:", response.get("tip"))  # show error message if response is not ok
+    # def threading_chapter_catalog(self, division):  # get chapter_list and add to self.chapter_list
+    #     response = HbookerAPI.Book.get_chapter_update(division['division_id'])
+    #     if response.get('code') == '100000':  # if response is ok and data is not empty
+    #         self.chapter_list.extend(response['data']['chapter_list'])  # add chapter_list to self.chapter_list
+    #         self.map[division['division_id']] = response['data']['chapter_list']
+    #     else:
+    #         print("threading_chapter_catalog error:", response.get("tip"))  # show error message if response is not ok
 
     def threading_get_chapter_list(self):
-        with ThreadPoolExecutor(max_workers=len(self.get_division_list)) as executor:
-            for division in self.get_division_list:
-                executor.submit(self.threading_chapter_catalog, division)
-        self.chapter_list.sort(key=lambda x: int(x['chapter_index']))  # sort chapter_list by chapter_index
+        for division in self.get_division_list:
+            chapter_list = division["chapter_list"]
+            self.chapter_list.extend(chapter_list)  # add chapter_list to self.chapter_list
+            self.map[division['division_id']] = chapter_list
+
+        # with ThreadPoolExecutor(max_workers=len(self.get_division_list)) as executor:
+        #     for division in self.get_division_list:
+        #         executor.submit(self.threading_chapter_catalog, division)
+        # self.chapter_list.sort(key=lambda x: int(x['chapter_index']))  # sort chapter_list by chapter_index
 
     def threading_add_key_and_id(self, data) -> None:  # add chapter_id and command_key to threading_chapter_id_list
         if data['chapter_id'] + '.txt' in os.listdir(Vars.config_text) or data['auth_access'] == '0':
@@ -51,7 +57,7 @@ class Catalog:
             return print("the chapter_list is empty")  # if chapter_list is empty return
         division_list_length, track_index = len(self.get_division_list), 1  # track_index is used to show progress
 
-        with ThreadPoolExecutor(max_workers=64) as executor:
+        with ThreadPoolExecutor(max_workers=Vars.cfg.data['max_thread']) as executor:
             for result in track(
                     [executor.submit(self.threading_add_key_and_id, data) for data in self.chapter_list],
                     description=f"length: {division_list_length} Loading..."

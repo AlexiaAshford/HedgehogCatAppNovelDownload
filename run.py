@@ -129,7 +129,7 @@ def update_config():
     if not isinstance(Vars.cfg.data.get('out_path'), str):
         Vars.cfg.data['out_path'] = "./downloads/"
     if not isinstance(Vars.cfg.data.get('local_cache_dir'), str):
-        Vars.cfg.data['local_cache_dir'] = "./LocalCache/"
+        Vars.cfg.data['local_cache_dir'] = "./local_cache/"
     if not isinstance(Vars.cfg.data.get('backups_local_cache'), bool):
         Vars.cfg.data['backups_local_cache'] = True
     if not isinstance(Vars.cfg.data.get('common_params'), dict):

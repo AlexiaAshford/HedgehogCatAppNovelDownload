@@ -88,6 +88,11 @@ class Book:
         return post(UrlConstants.GET_CHAPTER_UPDATE, {'division_id': division_id, 'last_update_time': update_time})
 
     @staticmethod
+    def get_division_list_new(book_id: str):
+        # change new division list api
+        return get(UrlConstants.GET_CHAPTER_UPDATE_NEW, {'book_id': book_id})
+
+    @staticmethod
     def get_info_by_id(book_id: str):
         data = {'book_id': book_id, 'recommend': '', 'carousel_position': '', 'tab_type': '', 'module_id': ''}
         return post(UrlConstants.BOOK_GET_INFO_BY_ID, data)
