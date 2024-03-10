@@ -171,7 +171,7 @@ class HTMLImage:
         return True
 
     def is_valid(self):
-        return self.src is not None
+        return self.src is not None and self.src != ''
 
     def to_local(self):
         if not self.is_valid():

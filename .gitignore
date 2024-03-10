@@ -1,4 +1,6 @@
 config.json
-HBooker/
+Hbooker/
 __pycache__/
 downloads/
+local_cache/
+venv/
